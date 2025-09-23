@@ -1,0 +1,178 @@
+import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:nscgschedule/router.dart';
+import 'package:nscgschedule/settings.dart';
+import 'dart:async';
+import 'package:dynamic_color/dynamic_color.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nscgschedule/notifications.dart';
+
+final getIt = GetIt.instance;
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize services
+  await _initServices();
+
+  runApp(const MyApp());
+}
+
+Future<void> _initServices() async {
+  // Settings
+  final settings = Settings();
+  await settings.init();
+  getIt.registerSingleton<Settings>(settings);
+
+  // Notification Service
+  final notificationService = NotificationService();
+  await notificationService.init();
+  getIt.registerSingleton<NotificationService>(notificationService);
+
+  // Request permissions after initialization
+  await notificationService.requestPermissions();
+}
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  bool _useSystemTheme = true;
+  bool _useMaterialYou = true;
+  ThemeMode _themeMode = ThemeMode.system;
+  StreamSubscription<bool>? _themeChangeSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _initTheme();
+  }
+
+  Future<void> _initTheme() async {
+    await _loadThemePreferences();
+    _themeChangeSubscription = getIt<Settings>().onThemeChanged.listen((
+      _,
+    ) async {
+      if (mounted) {
+        await _loadThemePreferences();
+        if (mounted) {
+          setState(() {
+            // Force a rebuild when theme changes
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _themeChangeSubscription?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> _loadThemePreferences() async {
+    if (!mounted) return;
+
+    try {
+      final useSystemTheme = await getIt<Settings>().getUseSystemTheme();
+      final isDarkMode = await getIt<Settings>().getDarkMode();
+      final useMaterialYou = await getIt<Settings>().getUseMaterialYou();
+
+      if (mounted) {
+        setState(() {
+          _useSystemTheme = useSystemTheme;
+          _useMaterialYou = useMaterialYou;
+          _themeMode = useSystemTheme
+              ? ThemeMode.system
+              : isDarkMode
+              ? ThemeMode.dark
+              : ThemeMode.light;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading theme preferences: $e');
+      if (mounted) {
+        setState(() {
+          _themeMode = ThemeMode.system;
+          _useSystemTheme = true;
+          _useMaterialYou = true;
+        });
+      }
+    }
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    if (_useSystemTheme && mounted) {
+      _loadThemePreferences();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        // Define the seed color for the app
+        const seedColor = Color.fromARGB(255, 255, 81, 0);
+
+        // Use dynamic color if available and Material You is enabled, otherwise use fixed seed
+        final supportsMaterialYou = lightDynamic != null && darkDynamic != null;
+
+        final lightColorScheme = (_useMaterialYou && supportsMaterialYou)
+            ? lightDynamic.harmonized()
+            : ColorScheme.fromSeed(
+                seedColor: seedColor,
+                brightness: Brightness.light,
+              );
+
+        final darkColorScheme = (_useMaterialYou && supportsMaterialYou)
+            ? darkDynamic.harmonized()
+            : ColorScheme.fromSeed(
+                seedColor: seedColor,
+                brightness: Brightness.dark,
+              );
+
+        debugPrint(
+          'Material You: $_useMaterialYou, Supported: $supportsMaterialYou',
+        );
+
+        return MaterialApp.router(
+          routerConfig: routerController,
+          title: 'NSCG Schedule',
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: lightColorScheme,
+            brightness: Brightness.light,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+          ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            colorScheme: darkColorScheme,
+            brightness: Brightness.dark,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+          ),
+          themeMode: _themeMode,
+          debugShowCheckedModeBanner: false,
+        );
+      },
+    );
+  }
+}
+
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    if (context.mounted) {
+      context.go('/');
+    }
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+  }
+}
