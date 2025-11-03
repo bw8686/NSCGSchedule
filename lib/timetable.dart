@@ -9,6 +9,7 @@ import 'package:nscgschedule/requests.dart';
 import 'package:nscgschedule/settings.dart';
 import 'package:nscgschedule/notifications.dart';
 import 'package:get_it/get_it.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class TimetableScreen extends StatefulWidget {
   const TimetableScreen({super.key});
@@ -19,7 +20,7 @@ class TimetableScreen extends StatefulWidget {
 
 class _TimetableScreenState extends State<TimetableScreen> {
   final CookieManager _cookieManager = CookieManager.instance();
-  final NSCGRequests _requests = NSCGRequests();
+  final NSCGRequests _requests = NSCGRequests.instance;
   bool _isLoading = true;
   String _error = '';
   models.Timetable? _timetable;
@@ -28,6 +29,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
   Timer? _timer;
   String _timeRemaining = '';
   String? _nextLessonId; // Track which lesson should show the countdown
+  bool _update = false;
+  PackageInfo? _packageInfo;
   final NotificationService _notificationService =
       GetIt.I<NotificationService>();
   // Set to true to enable debug mode with simulated times
@@ -49,6 +52,24 @@ class _TimetableScreenState extends State<TimetableScreen> {
 
     _notificationService.onReschedule.listen((_) {
       _scheduleNotifications();
+    });
+
+    _requests.debugModeController.stream.listen((value) {
+      setState(() {
+        _debugMode = value;
+      });
+    });
+
+    _requests.updateController.stream.listen((value) {
+      setState(() {
+        _update = value;
+      });
+    });
+
+    _requests.loggedinController.stream.listen((value) {
+      setState(() {
+        _loggedin = value;
+      });
     });
   }
 
@@ -241,46 +262,42 @@ class _TimetableScreenState extends State<TimetableScreen> {
     setState(() {
       _debugMode = debugMode;
     });
-    try {
-      final timetableData = await settings.getMap('timetable');
-      final timetableUpdated = await settings.getKey('timetableUpdated');
-      final loggedin = await settings.getBool('loggedin');
-      if (timetableData.isNotEmpty) {
-        try {
-          // Convert the map and all nested maps to ensure they have the correct type
-          final typedData = _convertToTypedMap(timetableData);
-          final timetable = models.Timetable.fromJson(typedData);
-          if (mounted) {
-            setState(() {
-              _timetable = timetable;
-              _timetableUpdated = timetableUpdated;
-              _error = '';
-              _loggedin = loggedin;
-            });
-            _scheduleNotifications();
-          }
-        } catch (e, stacktrace) {
-          debugPrint('Error loading timetable: $e');
-          debugPrint('Stacktrace: $stacktrace');
-          await settings.setMap('timetable', {});
+    final timetableData = await settings.getMap('timetable');
+    final timetableUpdated = await settings.getKey('timetableUpdated');
+    final loggedin = await settings.getBool('loggedin');
+    final update = await _requests.updateApp();
+    _update = update['version'] != _packageInfo?.version;
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (timetableData.isNotEmpty) {
+      try {
+        // Convert the map and all nested maps to ensure they have the correct type
+        final typedData = _convertToTypedMap(timetableData);
+        final timetable = models.Timetable.fromJson(typedData);
+        if (mounted) {
+          setState(() {
+            _packageInfo = packageInfo;
+            _timetable = timetable;
+            _timetableUpdated = timetableUpdated;
+            _error = '';
+            _loggedin = loggedin;
+            _isLoading = false;
+          });
+          _scheduleNotifications();
+          _loadTimetable();
         }
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+      } catch (e, stacktrace) {
+        debugPrint('Error loading timetable: $e');
+        debugPrint('Stacktrace: $stacktrace');
+        await settings.setMap('timetable', {});
       }
     }
   }
 
   Future<void> _loadTimetable() async {
     if (!mounted) return;
-
     if (_error.isNotEmpty) {
       setState(() {
         _error = '';
-        _isLoading = true;
       });
     }
 
@@ -303,12 +320,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
       if (mounted) {
         setState(() {
           _error = 'Failed to load timetable: ${e.toString()}';
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
+          _isLoading = true;
         });
       }
     }
@@ -378,21 +390,20 @@ class _TimetableScreenState extends State<TimetableScreen> {
         title: const Text('My Timetable'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.school),
+            tooltip: 'Exam Timetable',
+            onPressed: () {
+              context.push('/exams');
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _isLoading ? null : _reloadTimetable,
           ),
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: Icon(_update ? Icons.settings_suggest : Icons.settings),
             onPressed: () {
               context.push('/settings');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              settings.setBool('loggedin', false);
-              settings.setKey('timetable', '');
-              context.go('/');
             },
           ),
         ],
@@ -402,7 +413,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
+    if (_isLoading && _timetable == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -428,7 +439,20 @@ class _TimetableScreenState extends State<TimetableScreen> {
     }
 
     if (_timetable!.days.isEmpty) {
-      return const Center(child: Text('No schedule available for this period'));
+      return RefreshIndicator(
+        onRefresh: () async {
+          await _reloadTimetable();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - 200,
+            child: const Center(
+              child: Text('No schedule available for this period'),
+            ),
+          ),
+        ),
+      );
     }
 
     // Find the index of the current day or the next available day
@@ -485,36 +509,43 @@ class _TimetableScreenState extends State<TimetableScreen> {
           Expanded(
             child: TabBarView(
               children: _timetable!.days.map((day) {
-                return ListView.builder(
-                  padding: const EdgeInsets.all(8),
-                  itemCount: day.lessons.length,
-                  itemBuilder: (context, index) {
-                    final lesson = day.lessons[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        vertical: 4,
-                        horizontal: 8,
-                      ),
-                      child: ListTile(
-                        title: Text(
-                          lesson.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${lesson.startTime} - ${lesson.endTime}${_nextLessonId == '${lesson.name}-${lesson.startTime}' ? _timeRemaining : ''}',
-                            ),
-                            Text('Room: ${lesson.room}'),
-                            Text('Teachers: ${lesson.teachers.join(", ")}'),
-                            Text('Course: ${lesson.course} (${lesson.group})'),
-                          ],
-                        ),
-                        isThreeLine: true,
-                      ),
-                    );
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    await _reloadTimetable();
                   },
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(8),
+                    itemCount: day.lessons.length,
+                    itemBuilder: (context, index) {
+                      final lesson = day.lessons[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 4,
+                          horizontal: 8,
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            lesson.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${lesson.startTime} - ${lesson.endTime}${_nextLessonId == '${lesson.name}-${lesson.startTime}' ? _timeRemaining : ''}',
+                              ),
+                              Text('Room: ${lesson.room}'),
+                              Text('Teachers: ${lesson.teachers.join(", ")}'),
+                              Text(
+                                'Course: ${lesson.course} (${lesson.group})',
+                              ),
+                            ],
+                          ),
+                          isThreeLine: true,
+                        ),
+                      );
+                    },
+                  ),
                 );
               }).toList(),
             ),
@@ -624,15 +655,5 @@ class _TimetableScreenState extends State<TimetableScreen> {
     } catch (e) {
       debugPrint('Error scheduling notifications: $e');
     }
-  }
-}
-
-// This is a temporary wrapper to make the router work with the new implementation
-class Timetable extends StatelessWidget {
-  const Timetable({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const TimetableScreen();
   }
 }

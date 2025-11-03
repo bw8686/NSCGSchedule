@@ -3,6 +3,8 @@ import 'package:nscgschedule/main.dart';
 import 'package:nscgschedule/login.dart';
 import 'package:nscgschedule/settings_page.dart';
 import 'package:nscgschedule/timetable.dart';
+import 'package:nscgschedule/exam_timetable.dart';
+import 'package:nscgschedule/exam_details.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nscgschedule/settings.dart';
 
@@ -24,6 +26,18 @@ final GoRouter routerController = GoRouter(
       path: '/Timetable',
       builder: (BuildContext context, GoRouterState state) {
         return TimetableScreen();
+      },
+    ),
+    GoRoute(
+      path: '/exams',
+      builder: (BuildContext context, GoRouterState state) {
+        return ExamTimetableScreen();
+      },
+    ),
+    GoRoute(
+      path: '/exams/details',
+      builder: (BuildContext context, GoRouterState state) {
+        return ExamDetailsScreen();
       },
     ),
     GoRoute(

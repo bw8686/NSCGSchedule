@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nscgschedule/requests.dart';
 import 'package:nscgschedule/settings.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nscgschedule/notifications.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -31,6 +33,8 @@ class _SettingsPageState extends State<SettingsPage> {
     text: '1',
   );
   bool _debugMode = false;
+  Map<String, dynamic>? _version;
+  final NSCGRequests _requests = NSCGRequests.instance;
 
   @override
   void initState() {
@@ -49,7 +53,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> init() async {
     final debugMode = await settings.getBool('debugMode');
+    final update = await NSCGRequests.instance.updateApp();
     setState(() {
+      _version = update;
       _debugMode = debugMode;
     });
   }
@@ -425,14 +431,40 @@ class _SettingsPageState extends State<SettingsPage> {
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.update),
-                title: const Text('Update'),
-                subtitle: Text('Your up to date'),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                // subtitle: Text(_packageInfo?.version ?? 'Loading...'),
+                title: const Text('Updates'),
+                subtitle: Text(
+                  _version == null
+                      ? 'Checking...'
+                      : _version!['version'] == _packageInfo?.version
+                      ? 'Your up to date'
+                      : 'Update available',
+                ),
+                trailing:
+                    _version != null &&
+                        _version!['version'] != _packageInfo?.version
+                    ? const Icon(Icons.arrow_forward_ios)
+                    : null,
+                onTap:
+                    _version != null &&
+                        _version!['url'] != null &&
+                        _version!['url'].isNotEmpty &&
+                        _version!['version'] != _packageInfo?.version
+                    ? () async {
+                        final url = Uri.parse(_version!['url']);
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(
+                            url,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        }
+                      }
+                    : null,
               ),
               ListTile(
                 title: const Text('About'),
-                subtitle: const Text('App version 1.0.0'),
+                subtitle: Text(
+                  'App version ${_packageInfo?.version ?? 'Loading...'}',
+                ),
                 leading: const Icon(Icons.info_outline),
                 trailing: _debugMode
                     ? Badge(
@@ -447,7 +479,13 @@ class _SettingsPageState extends State<SettingsPage> {
                     context: context,
                     applicationName: 'NSCG Schedule',
                     applicationVersion: _packageInfo?.version ?? 'Loading...',
-                    applicationIcon: const Center(child: FlutterLogo(size: 55)),
+                    applicationIcon: Center(
+                      child: Image.asset(
+                        'assets/icon/icon.png',
+                        width: 55,
+                        height: 55,
+                      ),
+                    ),
                     children: [
                       Text('A Schedule/TimeTable app for NSCG students'),
                     ],
@@ -455,16 +493,25 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
                 onLongPress: () async {
                   if (await settings.getBool('debugMode')) {
-                    settings.setBool('debugMode', false);
+                    _requests.debugMode(false);
                     setState(() {
                       _debugMode = false;
                     });
                   } else {
-                    settings.setBool('debugMode', true);
+                    _requests.debugMode(true);
                     setState(() {
                       _debugMode = true;
                     });
                   }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Logout'),
+                onTap: () {
+                  settings.setBool('loggedin', false);
+                  settings.setKey('timetable', '');
+                  context.go('/');
                 },
               ),
             ],

@@ -12,12 +12,14 @@ class Settings {
   static const String _useMaterialYouKey = 'useMaterialYou';
   static const String _notificationsEnabledKey = 'notificationsEnabled';
   static const String _notifyMinutesBeforeKey = 'notifyMinutesBefore';
-  static const String _notifyMinutesBeforeEnabledKey = 'notifyMinutesBeforeEnabled';
+  static const String _notifyMinutesBeforeEnabledKey =
+      'notifyMinutesBeforeEnabled';
   static const String _notifyOnStartTimeKey = 'notifyOnStartTime';
 
   late final SharedPreferences _prefs;
   final _themeChangeController = StreamController<bool>.broadcast();
-  final _notificationSettingsChangeController = StreamController<void>.broadcast();
+  final _notificationSettingsChangeController =
+      StreamController<void>.broadcast();
 
   Stream<bool> get onThemeChanged => _themeChangeController.stream;
   Stream<void> get onNotificationSettingsChanged =>
