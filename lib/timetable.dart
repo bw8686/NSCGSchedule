@@ -341,6 +341,31 @@ class _TimetableScreenState extends State<TimetableScreen> {
               initialUrlRequest: URLRequest(
                 url: WebUri('https://my.nulc.ac.uk'),
               ),
+              initialSettings: InAppWebViewSettings(
+                javaScriptEnabled: true,
+                domStorageEnabled: true,
+                databaseEnabled: true,
+                useOnLoadResource: true,
+                allowsBackForwardNavigationGestures: true,
+                thirdPartyCookiesEnabled: true,
+                allowsInlineMediaPlayback: true,
+                mediaPlaybackRequiresUserGesture: false,
+                mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
+                cacheEnabled: true,
+                clearCache: false,
+                useShouldOverrideUrlLoading: false,
+              ),
+              onReceivedServerTrustAuthRequest: (controller, challenge) async {
+                // Allow SSL certificate for my.nulc.ac.uk
+                if (challenge.protectionSpace.host == 'my.nulc.ac.uk') {
+                  return ServerTrustAuthResponse(
+                    action: ServerTrustAuthResponseAction.PROCEED,
+                  );
+                }
+                return ServerTrustAuthResponse(
+                  action: ServerTrustAuthResponseAction.CANCEL,
+                );
+              },
               onLoadStop: (controller, url) async {
                 if (!url.toString().contains('authToken') &&
                     url.toString().startsWith('https://my.nulc.ac.uk')) {
