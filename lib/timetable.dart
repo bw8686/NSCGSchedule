@@ -342,6 +342,28 @@ class _TimetableScreenState extends State<TimetableScreen> {
                 url: WebUri('https://my.nulc.ac.uk'),
               ),
               onLoadStop: (controller, url) async {
+                if (!url.toString().contains('authToken')) {
+                  if (mounted) {
+                    // ignore: use_build_context_synchronously
+                    Navigator.pop(context);
+                  }
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Cannot Login'),
+                      content: const Text(
+                        'This error is commonly caused by being connected to college wifi which prevents this page from redirecting to the login screen.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text('Close'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                ;
                 if (url.toString().startsWith('https://my.nulc.ac.uk')) {
                   settings.setKey(
                     'cookies',
