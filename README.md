@@ -1,4 +1,4 @@
-# nscgschedule
+# NSCGSchedule
 
 A new Flutter project.
 

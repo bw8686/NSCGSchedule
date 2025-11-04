@@ -40,8 +40,8 @@ class NotificationService {
 
     const WindowsInitializationSettings initializationSettingsWindows =
         WindowsInitializationSettings(
-          appName: 'NSCGSchedule',
-          appUserModelId: 'com.example.nscgschedule',
+          appName: 'nscgschedule',
+          appUserModelId: 'uk.bw86.nscgschedule',
           guid: 'bfc31329-0bd6-4e08-8d51-9b1c43dcb95b',
         );
 
@@ -88,10 +88,10 @@ class NotificationService {
     int id,
     String title,
     String body,
-    DateTime scheduledTime,
-    {bool repeatWeekly = false, 
-    NotificationType type = NotificationType.lessonStart}
-  ) async {
+    DateTime scheduledTime, {
+    bool repeatWeekly = false,
+    NotificationType type = NotificationType.lessonStart,
+  }) async {
     await flutterLocalNotificationsPlugin.zonedSchedule(
       id,
       title,
@@ -123,7 +123,9 @@ class NotificationService {
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: repeatWeekly ? DateTimeComponents.dayOfWeekAndTime : null,
+      matchDateTimeComponents: repeatWeekly
+          ? DateTimeComponents.dayOfWeekAndTime
+          : null,
     );
   }
 

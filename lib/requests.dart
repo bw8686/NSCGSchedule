@@ -86,9 +86,7 @@ class NSCGRequests {
         loggedinController.add(false);
         return null;
       }
-    } catch (e, stackTrace) {
-      print('Error getting timetable: $e');
-      print('Stack trace: $stackTrace');
+    } catch (e) {
       return null;
     }
   }
@@ -149,7 +147,7 @@ class NSCGRequests {
       final dio = Dio();
       dio.options.baseUrl = 'https://raw.githubusercontent.com';
       final response = await dio.get(
-        '/bw8686/NSCGSchedule/refs/heads/main/update.json',
+        '/bw8686/nscgschedule/refs/heads/main/update.json',
       );
       final packageInfo = await PackageInfo.fromPlatform();
       final deData = jsonDecode(response.data);
