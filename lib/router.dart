@@ -31,7 +31,8 @@ final GoRouter routerController = GoRouter(
     GoRoute(
       path: '/exams',
       builder: (BuildContext context, GoRouterState state) {
-        return ExamTimetableScreen();
+        final open = state.uri.queryParameters['open'];
+        return ExamTimetableScreen(initialExamKey: open);
       },
     ),
     GoRoute(

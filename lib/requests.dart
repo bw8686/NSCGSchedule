@@ -7,6 +7,7 @@ import 'package:dio/io.dart';
 import 'package:nscgschedule/models/timetable_models.dart';
 import 'package:nscgschedule/models/exam_models.dart';
 import 'package:nscgschedule/settings.dart';
+import 'package:nscgschedule/watch_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class NSCGRequests {
@@ -80,6 +81,9 @@ class NSCGRequests {
         Timetable timetable = Timetable.fromHtml(response.data!);
         settings.setMap('timetable', timetable.toJson());
         settings.setKey('timetableUpdated', DateTime.now().toIso8601String());
+        // Sync with WearOS watch
+        WatchService.instance.syncTimetable();
+        WatchService.instance.updateContext();
         return timetable;
       } else {
         settings.setBool('loggedin', false);
@@ -131,6 +135,9 @@ class NSCGRequests {
           'examTimetableUpdated',
           DateTime.now().toIso8601String(),
         );
+        // Sync with WearOS watch
+        WatchService.instance.syncExamTimetable();
+        WatchService.instance.updateContext();
         return examTimetable;
       } else {
         settings.setBool('loggedin', false);

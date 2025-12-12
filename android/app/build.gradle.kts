@@ -68,4 +68,11 @@ dependencies {
     implementation("androidx.window:window:1.0.0")
     implementation("androidx.window:window-java:1.0.0")
     implementation("androidx.multidex:multidex:2.0.1")
+    
+    // Wearable support for Data Layer API
+    implementation("com.google.android.gms:play-services-wearable:18.2.0")
+    
+    // Coroutines for async operations
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 }

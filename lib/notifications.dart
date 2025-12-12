@@ -3,7 +3,12 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'dart:async';
 
-enum NotificationType { lessonStart, minutesBefore }
+enum NotificationType {
+  lessonStart,
+  minutesBefore,
+  examStart,
+  examMinutesBefore,
+}
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -24,7 +29,10 @@ class NotificationService {
     }
   }
 
-  Future<void> init() async {
+  Future<void> init({
+    void Function(NotificationResponse response)?
+    onDidReceiveNotificationResponse,
+  }) async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -56,7 +64,10 @@ class NotificationService {
 
     tz.initializeTimeZones();
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
+    );
   }
 
   Future<void> requestPermissions() async {
@@ -91,14 +102,18 @@ class NotificationService {
     DateTime scheduledTime, {
     bool repeatWeekly = false,
     NotificationType type = NotificationType.lessonStart,
+    String? payload,
   }) async {
+    final isStartType =
+        type == NotificationType.lessonStart ||
+        type == NotificationType.examStart;
     await flutterLocalNotificationsPlugin.zonedSchedule(
       id,
       title,
       body,
       tz.TZDateTime.from(scheduledTime, tz.local),
       NotificationDetails(
-        android: type == NotificationType.lessonStart
+        android: isStartType
             ? const AndroidNotificationDetails(
                 'lesson_start_channel',
                 'Lesson Start',
@@ -122,6 +137,7 @@ class NotificationService {
           presentSound: true,
         ),
       ),
+      payload: payload,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: repeatWeekly
           ? DateTimeComponents.dayOfWeekAndTime

@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nscgschedule/router.dart';
 import 'package:nscgschedule/settings.dart';
+import 'package:nscgschedule/watch_service.dart';
 import 'dart:async';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nscgschedule/notifications.dart';
 
 final getIt = GetIt.instance;
+
+// Pending notification payload (encoded) to process after app initialization if immediate navigation fails
+String? pendingNotificationOpen;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,11 +30,31 @@ Future<void> _initServices() async {
 
   // Notification Service
   final notificationService = NotificationService();
-  await notificationService.init();
+  await notificationService.init(
+    onDidReceiveNotificationResponse: (response) {
+      final payload = response.payload;
+      if (payload == null || payload.isEmpty) return;
+
+      if (payload.startsWith('exam:')) {
+        final examKey = payload.substring('exam:'.length);
+        final encoded = Uri.encodeComponent(examKey);
+        // Use push so tapping a notification creates a back-entry and user can return
+        try {
+          routerController.push('/exams?open=$encoded');
+        } catch (e) {
+          // If navigation isn't ready yet (cold start), store for processing after app init
+          pendingNotificationOpen = encoded;
+        }
+      }
+    },
+  );
   getIt.registerSingleton<NotificationService>(notificationService);
 
   // Request permissions after initialization
   await notificationService.requestPermissions();
+
+  // Watch Service for WearOS communication
+  await WatchService.instance.init();
 }
 
 class MyApp extends StatefulWidget {
@@ -51,6 +75,22 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initTheme();
+    // If a notification arrived before the app/router was ready, navigate now
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (pendingNotificationOpen != null) {
+        try {
+          routerController.push('/exams?open=${pendingNotificationOpen}');
+        } catch (e) {
+          try {
+            routerController.go('/exams?open=${pendingNotificationOpen}');
+          } catch (_) {
+            // give up silently; nothing more we can do here
+          }
+        } finally {
+          pendingNotificationOpen = null;
+        }
+      }
+    });
   }
 
   Future<void> _initTheme() async {

@@ -9,7 +9,9 @@ import 'package:nscgschedule/requests.dart';
 import 'package:nscgschedule/settings.dart';
 
 class ExamTimetableScreen extends StatefulWidget {
-  const ExamTimetableScreen({super.key});
+  final String? initialExamKey;
+
+  const ExamTimetableScreen({super.key, this.initialExamKey});
 
   @override
   State<ExamTimetableScreen> createState() => _ExamTimetableScreenState();
@@ -24,6 +26,37 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
   String _examTimetableUpdated = '';
   bool _loggedin = false;
   StreamSubscription<void>? _resub;
+  bool _initialExamOpened = false;
+
+  String _examKey(Exam exam) {
+    return '${exam.date}|${exam.startTime}|${exam.finishTime}|${exam.subjectDescription}|${exam.examRoom}|${exam.seatNumber}';
+  }
+
+  void _tryOpenInitialExam() {
+    if (_initialExamOpened) return;
+    final rawKey = widget.initialExamKey;
+    if (rawKey == null) return;
+    final key = Uri.decodeComponent(rawKey).trim();
+    if (key == null || key.isEmpty) return;
+    final timetable = _examTimetable;
+    if (timetable == null || !timetable.hasExams) return;
+
+    Exam? match;
+    for (final ex in timetable.exams) {
+      final exKey = _examKey(ex).trim();
+      if (exKey == key) {
+        match = ex;
+        break;
+      }
+    }
+    if (match == null) return;
+
+    _initialExamOpened = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _showExamDetails(context, match!);
+    });
+  }
 
   @override
   void initState() {
@@ -83,6 +116,7 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
             _loggedin = loggedin;
             _isLoading = false;
           });
+          _tryOpenInitialExam();
         }
       } catch (e, stacktrace) {
         debugPrint('Error loading exam timetable: $e');
@@ -126,6 +160,7 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
             _loggedin = loggedin;
             _isLoading = false;
           });
+          _tryOpenInitialExam();
         }
       } else {
         if (mounted) {
@@ -320,6 +355,17 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.of(context).pop();
+            } else {
+              // If there's no back stack, go to the main timetable
+              context.go('/Timetable');
+            }
+          },
+        ),
         title: const Text('Exam Timetable'),
         actions: [
           IconButton(

@@ -31,7 +31,6 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_inappwebview: ^6.1.5
-  watch_connectivity: ^0.2.1+1
   dio: ^5.9.0
   hive_ce: ^2.11.3
   path_provider: ^2.1.5

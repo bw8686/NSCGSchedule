@@ -5,6 +5,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:nscgschedule/models/timetable_models.dart' as models;
+import 'package:nscgschedule/models/exam_models.dart';
 import 'package:nscgschedule/requests.dart';
 import 'package:nscgschedule/settings.dart';
 import 'package:nscgschedule/notifications.dart';
@@ -682,6 +683,10 @@ class _TimetableScreenState extends State<TimetableScreen> {
       final now = DateTime.now();
       int notificationId = 0;
 
+      String examKey(Exam exam) {
+        return '${exam.date}|${exam.startTime}|${exam.finishTime}|${exam.subjectDescription}|${exam.examRoom}|${exam.seatNumber}';
+      }
+
       final weekdayMap = {
         'monday': DateTime.monday,
         'tuesday': DateTime.tuesday,
@@ -745,6 +750,65 @@ class _TimetableScreenState extends State<TimetableScreen> {
             }
           }
         }
+      }
+
+      // Exams: one-off notifications (not weekly).
+      try {
+        final examTimetableData = await settings.getMap('examTimetable');
+        if (examTimetableData.isNotEmpty) {
+          final typedExamData = _convertToTypedMap(examTimetableData);
+          final examTimetable = ExamTimetable.fromJson(typedExamData);
+
+          for (final exam in examTimetable.exams) {
+            // Parse exam date: typically dd-MM-yyyy.
+            final dateParts = exam.date.split(RegExp(r'[-/]'));
+            if (dateParts.length != 3) continue;
+            final day = int.tryParse(dateParts[0]);
+            final month = int.tryParse(dateParts[1]);
+            final year = int.tryParse(dateParts[2]);
+            if (day == null || month == null || year == null) continue;
+
+            final startParts = exam.startTime.split(':');
+            if (startParts.length != 2) continue;
+            final sh = int.tryParse(startParts[0]);
+            final sm = int.tryParse(startParts[1]);
+            if (sh == null || sm == null) continue;
+
+            final startDateTime = DateTime(year, month, day, sh, sm);
+            if (!startDateTime.isAfter(now)) continue;
+
+            final payload = 'exam:${examKey(exam)}';
+
+            if (notifyOnStart) {
+              await _notificationService.scheduleNotification(
+                notificationId++,
+                exam.subjectDescription,
+                'Starts now in ${exam.examRoom} (Seat ${exam.seatNumber})',
+                startDateTime,
+                type: NotificationType.examStart,
+                payload: payload,
+              );
+            }
+
+            if (beforeEnabled && minutesBefore > 0) {
+              final beforeTime = startDateTime.subtract(
+                Duration(minutes: minutesBefore),
+              );
+              if (beforeTime.isAfter(now)) {
+                await _notificationService.scheduleNotification(
+                  notificationId++,
+                  exam.subjectDescription,
+                  'Starts in $minutesBefore minutes in ${exam.examRoom} (Seat ${exam.seatNumber})',
+                  beforeTime,
+                  type: NotificationType.examMinutesBefore,
+                  payload: payload,
+                );
+              }
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Error scheduling exam notifications: $e');
       }
     } catch (e) {
       debugPrint('Error scheduling notifications: $e');
