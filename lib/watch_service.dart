@@ -3,9 +3,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:nscgschedule/models/exam_models.dart';
-import 'package:nscgschedule/models/timetable_models.dart';
-import 'package:nscgschedule/requests.dart';
 import 'package:nscgschedule/settings.dart';
 
 /// Service to handle communication with WearOS companion app

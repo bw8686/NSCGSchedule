@@ -21,54 +21,122 @@ class Timetable {
 
   factory Timetable.fromHtml(String html) {
     final document = parse(html);
-    final days = <DaySchedule>[];
-    String currentDay = '';
-    List<Lesson> currentLessons = [];
 
-    // Find all table rows
-    final rows = document.querySelectorAll('table tr');
+    // Map of left position (in inches) -> weekday name
+    final dayPositions = <double, String>{
+      0.5: 'Monday',
+      3.0: 'Tuesday',
+      5.5: 'Wednesday',
+      8.0: 'Thursday',
+      10.5: 'Friday',
+    };
 
-    for (final row in rows) {
-      // Check if this is a day header row
-      final dayHeader = row.querySelector('th[colspan="7"]');
-      if (dayHeader != null) {
-        // Save previous day's lessons if any
-        if (currentDay.isNotEmpty && currentLessons.isNotEmpty) {
-          days.add(
-            DaySchedule(day: currentDay, lessons: List.from(currentLessons)),
-          );
-          currentLessons.clear();
-        }
-        currentDay = dayHeader.text.trim();
+    String? weekdayForLeft(double left) {
+      for (final entry in dayPositions.entries) {
+        if ((entry.key - left).abs() < 0.2) return entry.value;
+      }
+      return null;
+    }
+
+    final daysMap = <String, List<Lesson>>{};
+
+    final items = document.querySelectorAll('div.ttItem');
+    for (final item in items) {
+      final classes = item.className;
+      if (classes.contains('ttItemTimes') || classes.contains('ttItemDays')) {
         continue;
       }
 
-      // Process lesson rows (skip header rows)
-      final cells = row.querySelectorAll('td');
-      if (cells.length >= 7) {
-        // Ensure we have all required columns
-        final lesson = Lesson(
-          teachers: cells[0].text
-              .trim()
-              .split(',')
-              .map((e) => e.trim())
-              .toList(),
-          course: cells[1].text.trim(),
-          group: cells[2].text.trim(),
-          name: cells[3].text.trim(),
-          startTime: cells[4].text.trim(),
-          endTime: cells[5].text.trim(),
-          room: cells[6].text.trim(),
-        );
-        currentLessons.add(lesson);
+      final style = item.attributes['style'] ?? '';
+      final leftMatch = RegExp(
+        r'left:\s*([0-9]*\.?[0-9]+)in',
+      ).firstMatch(style);
+      if (leftMatch == null) continue;
+      final left = double.tryParse(leftMatch.group(1) ?? '');
+      if (left == null) continue;
+
+      final weekday = weekdayForLeft(left);
+      if (weekday == null) continue;
+
+      final inner = item.innerHtml.replaceAll(
+        RegExp(r'<br\s*/?>', caseSensitive: false),
+        '\n',
+      );
+      final text = parse(inner).body?.text ?? inner;
+      final lines = text
+          .split('\n')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      if (lines.isEmpty) continue;
+
+      final name = lines[0];
+
+      String courseCode = '';
+      String group = '';
+      List<String> teachers = [];
+
+      if (lines.length >= 2) {
+        // Fallback parsing: expect "CODE GROUP Teachers..." on the second line
+        final parts = lines[1].split(RegExp(r'\s+'));
+        if (parts.isNotEmpty) {
+          courseCode = parts[0];
+          if (parts.length >= 2) group = parts[1];
+          if (parts.length > 2) {
+            teachers = parts
+                .sublist(2)
+                .join(' ')
+                .split(RegExp(r',\s*| and '))
+                .map((s) => s.trim())
+                .where((s) => s.isNotEmpty)
+                .toList();
+          }
+        }
       }
+
+      String startTime = '';
+      String endTime = '';
+      if (lines.length >= 3) {
+        final timeLine = lines[2].replaceAll('\u00a0', ' ');
+        final tmatch = RegExp(
+          r'(\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*[–-]\s*(\d{1,2}:\d{2}\s*(?:AM|PM)?)',
+          caseSensitive: false,
+        ).firstMatch(timeLine);
+        if (tmatch != null) {
+          startTime = tmatch.group(1)?.trim() ?? '';
+          endTime = tmatch.group(2)?.trim() ?? '';
+        }
+      }
+
+      final room = '';
+
+      final lesson = Lesson(
+        teachers: teachers,
+        course: courseCode,
+        group: group,
+        name: name,
+        startTime: startTime,
+        endTime: endTime,
+        room: room,
+      );
+
+      daysMap.putIfAbsent(weekday, () => []).add(lesson);
     }
 
-    // Add the last day's lessons if any
-    if (currentDay.isNotEmpty && currentLessons.isNotEmpty) {
-      days.add(
-        DaySchedule(day: currentDay, lessons: List.from(currentLessons)),
-      );
+    final order = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    final days = <DaySchedule>[];
+    for (final dayName in order) {
+      if (daysMap.containsKey(dayName)) {
+        days.add(DaySchedule(day: dayName, lessons: daysMap[dayName]!));
+      }
     }
 
     return Timetable(days: days);

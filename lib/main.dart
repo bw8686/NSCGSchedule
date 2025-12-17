@@ -79,10 +79,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (pendingNotificationOpen != null) {
         try {
-          routerController.push('/exams?open=${pendingNotificationOpen}');
+          routerController.push('/exams?open=$pendingNotificationOpen');
         } catch (e) {
           try {
-            routerController.go('/exams?open=${pendingNotificationOpen}');
+            routerController.go('/exams?open=$pendingNotificationOpen');
           } catch (_) {
             // give up silently; nothing more we can do here
           }

@@ -37,7 +37,7 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
     final rawKey = widget.initialExamKey;
     if (rawKey == null) return;
     final key = Uri.decodeComponent(rawKey).trim();
-    if (key == null || key.isEmpty) return;
+    if (key.isEmpty) return;
     final timetable = _examTimetable;
     if (timetable == null || !timetable.hasExams) return;
 

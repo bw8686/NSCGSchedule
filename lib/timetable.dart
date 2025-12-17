@@ -12,6 +12,12 @@ import 'package:nscgschedule/notifications.dart';
 import 'package:get_it/get_it.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+// Enable interactive room editing with: --dart-define=INSERT_ROOM_NUMBERS=true
+const bool kInsertRoomNumbers = bool.fromEnvironment(
+  'INSERT_ROOM_NUMBERS',
+  defaultValue: false,
+);
+
 class TimetableScreen extends StatefulWidget {
   const TimetableScreen({super.key});
 
@@ -73,6 +79,11 @@ class _TimetableScreenState extends State<TimetableScreen> {
       });
     });
   }
+
+  // Merging of room numbers is handled in `lib/requests.dart` where the
+  // freshly fetched timetable is parsed and persisted. The UI should not
+  // perform merging to avoid duplicating logic or persisting different
+  // results. This placeholder remains to document intent.
 
   @override
   void dispose() {
@@ -308,13 +319,29 @@ class _TimetableScreenState extends State<TimetableScreen> {
       final loggedin = await settings.getBool('loggedin');
 
       if (timetable != null) {
-        if (mounted) {
-          setState(() {
-            _timetable = timetable;
-            _timetableUpdated = timetableUpdated;
-            _loggedin = loggedin;
-          });
+        try {
+          // The requests layer now performs any necessary merging and
+          // persistence. The UI should simply consume the timetable returned
+          // by `getTimeTable()` and update state accordingly.
+          if (mounted) {
+            setState(() {
+              _timetable = timetable;
+              _timetableUpdated = timetableUpdated;
+              _loggedin = loggedin;
+              _isLoading = false;
+              _error = '';
+            });
+          }
+        } catch (e) {
+          if (mounted) {
+            setState(() {
+              _timetable = timetable;
+              _timetableUpdated = timetableUpdated;
+              _loggedin = loggedin;
+            });
+          }
         }
+
         _scheduleNotifications();
       }
     } catch (e) {
@@ -637,6 +664,14 @@ class _TimetableScreenState extends State<TimetableScreen> {
                             ],
                           ),
                           isThreeLine: true,
+                          onTap: kInsertRoomNumbers
+                              ? () {
+                                  final dayIndex = _timetable!.days.indexOf(
+                                    day,
+                                  );
+                                  _editRoom(dayIndex, index);
+                                }
+                              : null,
                         ),
                       );
                     },
@@ -813,5 +848,61 @@ class _TimetableScreenState extends State<TimetableScreen> {
     } catch (e) {
       debugPrint('Error scheduling notifications: $e');
     }
+  }
+
+  Future<void> _editRoom(int dayIndex, int lessonIndex) async {
+    if (_timetable == null) return;
+
+    final lesson = _timetable!.days[dayIndex].lessons[lessonIndex];
+    final controller = TextEditingController(text: lesson.room);
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Room'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Room'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newRoom = controller.text.trim();
+              setState(() {
+                _timetable = models.Timetable(
+                  days: List.generate(_timetable!.days.length, (dIdx) {
+                    final d = _timetable!.days[dIdx];
+                    if (dIdx != dayIndex) return d;
+                    final newLessons = List<models.Lesson>.from(d.lessons);
+                    final old = newLessons[lessonIndex];
+                    newLessons[lessonIndex] = models.Lesson(
+                      teachers: old.teachers,
+                      course: old.course,
+                      group: old.group,
+                      name: old.name,
+                      startTime: old.startTime,
+                      endTime: old.endTime,
+                      room: newRoom,
+                    );
+                    return models.DaySchedule(day: d.day, lessons: newLessons);
+                  }),
+                );
+              });
+
+              // Persist changes
+              await settings.setMap('timetable', _timetable!.toJson());
+              await _scheduleNotifications();
+              // ignore: use_build_context_synchronously
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 }
