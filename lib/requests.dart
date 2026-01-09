@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
-import 'package:flutter/material.dart';
 import 'package:nscgschedule/models/timetable_models.dart';
 import 'package:nscgschedule/models/exam_models.dart';
 import 'package:nscgschedule/settings.dart';
@@ -35,77 +34,6 @@ class NSCGRequests {
           };
       return client;
     };
-  }
-
-  // Merge room numbers from an old timetable into a freshly fetched timetable.
-  // Rule: only use the old timetable's room when the freshly fetched lesson's
-  // room is empty (ignoring whitespace) and the old room is non-empty.
-  Timetable _mergeRoomNumbers(Timetable oldT, Timetable newT) {
-    debugPrint(
-      'Requests: merging room numbers: oldDays=${oldT.days.length}, newDays=${newT.days.length}',
-    );
-
-    final mergedDays = newT.days.map((newDay) {
-      final oldDay = oldT.days.firstWhere(
-        (d) => d.day.toLowerCase().contains(
-          newDay.day.toLowerCase().split(' ').first,
-        ),
-        orElse: () => DaySchedule(day: newDay.day, lessons: []),
-      );
-
-      debugPrint(
-        'Requests: merging day "${newDay.day}": new=${newDay.lessons.length}, old=${oldDay.lessons.length}',
-      );
-
-      final mergedLessons = newDay.lessons.map((newLesson) {
-        // Find matching lesson in old day by normalized name/start/end
-        Lesson? match;
-        try {
-          match = oldDay.lessons.firstWhere((ol) {
-            final oldName = ol.name.trim().toLowerCase();
-            final newName = newLesson.name.trim().toLowerCase();
-            final oldStart = ol.startTime.replaceAll(' ', '').toLowerCase();
-            final newStart = newLesson.startTime
-                .replaceAll(' ', '')
-                .toLowerCase();
-            final oldEnd = ol.endTime.replaceAll(' ', '').toLowerCase();
-            final newEnd = newLesson.endTime.replaceAll(' ', '').toLowerCase();
-            return oldName == newName &&
-                oldStart == newStart &&
-                oldEnd == newEnd;
-          });
-        } catch (e) {
-          match = null;
-        }
-
-        final newRoom = newLesson.room.trim();
-        final oldRoom = match != null ? match.room.trim() : '';
-        String room;
-        if (newRoom.isEmpty && oldRoom.isNotEmpty) {
-          room = oldRoom;
-          debugPrint(
-            'Requests: using old room for "${newLesson.name}": "$room"',
-          );
-        } else {
-          room = newLesson.room;
-        }
-
-        return Lesson(
-          teachers: newLesson.teachers,
-          course: newLesson.course,
-          group: newLesson.group,
-          name: newLesson.name,
-          startTime: newLesson.startTime,
-          endTime: newLesson.endTime,
-          room: room,
-        );
-      }).toList();
-
-      return DaySchedule(day: newDay.day, lessons: mergedLessons);
-    }).toList();
-
-    debugPrint('Requests: merging complete');
-    return Timetable(days: mergedDays);
   }
 
   Future<bool> debugMode(bool value) async {
@@ -150,63 +78,16 @@ class NSCGRequests {
       if (response.statusCode == 200 &&
           response.data != null &&
           response.realUri.toString().contains('studentTT/')) {
-        // Parse freshly fetched timetable
-        Timetable newTimetable = Timetable.fromHtml(response.data!);
-
-        // Attempt to load previously stored timetable so we can carry over room
-        // numbers (including any user edits) where the freshly fetched item
-        // has an empty room value.
-        try {
-          final stored = await settings.getMap('timetable');
-          if (stored.isNotEmpty) {
-            try {
-              final oldTimetable = Timetable.fromJson(stored);
-              final merged = _mergeRoomNumbers(oldTimetable, newTimetable);
-              await settings.setMap('timetable', merged.toJson());
-              await settings.setKey(
-                'timetableUpdated',
-                DateTime.now().toIso8601String(),
-              );
-              // Sync with WearOS watch
-              WatchService.instance.syncTimetable();
-              WatchService.instance.updateContext();
-              debugPrint('getTimeTable: persisted merged timetable');
-              return merged;
-            } catch (e) {
-              debugPrint('getTimeTable: failed to merge timetables: $e');
-              // Fall back to saving the freshly parsed timetable
-              await settings.setMap('timetable', newTimetable.toJson());
-              await settings.setKey(
-                'timetableUpdated',
-                DateTime.now().toIso8601String(),
-              );
-              WatchService.instance.syncTimetable();
-              WatchService.instance.updateContext();
-              return newTimetable;
-            }
-          } else {
-            // No stored timetable, persist the freshly fetched one
-            await settings.setMap('timetable', newTimetable.toJson());
-            await settings.setKey(
-              'timetableUpdated',
-              DateTime.now().toIso8601String(),
-            );
-            WatchService.instance.syncTimetable();
-            WatchService.instance.updateContext();
-            debugPrint('getTimeTable: persisted new timetable');
-            return newTimetable;
-          }
-        } catch (e) {
-          debugPrint('getTimeTable: error reading stored timetable: $e');
-          await settings.setMap('timetable', newTimetable.toJson());
-          await settings.setKey(
-            'timetableUpdated',
-            DateTime.now().toIso8601String(),
-          );
-          WatchService.instance.syncTimetable();
-          WatchService.instance.updateContext();
-          return newTimetable;
-        }
+        Timetable timetable = Timetable.fromHtml(response.data!);
+        await settings.setMap('timetable', timetable.toJson());
+        await settings.setKey(
+          'timetableUpdated',
+          DateTime.now().toIso8601String(),
+        );
+        // Sync with WearOS watch
+        await WatchService.instance.syncTimetable();
+        await WatchService.instance.updateContext();
+        return timetable;
       } else {
         settings.setBool('loggedin', false);
         loggedinController.add(false);
@@ -252,14 +133,14 @@ class NSCGRequests {
 
       if (response.statusCode == 200 && response.data != null) {
         ExamTimetable examTimetable = ExamTimetable.fromHtml(response.data!);
-        settings.setMap('examTimetable', examTimetable.toJson());
-        settings.setKey(
+        await settings.setMap('examTimetable', examTimetable.toJson());
+        await settings.setKey(
           'examTimetableUpdated',
           DateTime.now().toIso8601String(),
         );
         // Sync with WearOS watch
-        WatchService.instance.syncExamTimetable();
-        WatchService.instance.updateContext();
+        await WatchService.instance.syncExamTimetable();
+        await WatchService.instance.updateContext();
         return examTimetable;
       } else {
         settings.setBool('loggedin', false);

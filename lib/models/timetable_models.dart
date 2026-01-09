@@ -22,18 +22,54 @@ class Timetable {
   factory Timetable.fromHtml(String html) {
     final document = parse(html);
 
-    // Map of left position (in inches) -> weekday name
-    final dayPositions = <double, String>{
-      0.5: 'Monday',
-      3.0: 'Tuesday',
-      5.5: 'Wednesday',
-      8.0: 'Thursday',
-      10.5: 'Friday',
+    // Build a mapping of top position (px) -> time string
+    final topToTime = <double, String>{};
+    final timeItems = document.querySelectorAll('div.ttItemTimes');
+    for (final item in timeItems) {
+      final style = item.attributes['style'] ?? '';
+      final topMatch = RegExp(r'top:\s*([0-9]*\.?[0-9]+)px').firstMatch(style);
+      if (topMatch != null) {
+        final top = double.tryParse(topMatch.group(1) ?? '');
+        if (top != null) {
+          final timeText = item.text.trim();
+          topToTime[top] = timeText;
+        }
+      }
+    }
+
+    // Helper to find time for a given top position
+    String? timeForTop(double top) {
+      // Find exact match or closest time entry
+      if (topToTime.containsKey(top)) return topToTime[top];
+      // Find closest
+      double? closest;
+      double minDiff = double.infinity;
+      for (final key in topToTime.keys) {
+        final diff = (key - top).abs();
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = key;
+        }
+      }
+      return closest != null ? topToTime[closest] : null;
+    }
+
+    // Map of left percentage -> weekday name
+    final dayPositions = <int, String>{
+      6: 'Monday',
+      24: 'Tuesday',
+      42: 'Wednesday',
+      60: 'Thursday',
+      78: 'Friday',
     };
 
-    String? weekdayForLeft(double left) {
-      for (final entry in dayPositions.entries) {
-        if ((entry.key - left).abs() < 0.2) return entry.value;
+    String? weekdayForLeft(String leftStr) {
+      final match = RegExp(r'(\d+)%').firstMatch(leftStr);
+      if (match != null) {
+        final leftPercent = int.tryParse(match.group(1) ?? '');
+        if (leftPercent != null) {
+          return dayPositions[leftPercent];
+        }
       }
       return null;
     }
@@ -48,16 +84,31 @@ class Timetable {
       }
 
       final style = item.attributes['style'] ?? '';
-      final leftMatch = RegExp(
-        r'left:\s*([0-9]*\.?[0-9]+)in',
-      ).firstMatch(style);
+      final leftMatch = RegExp(r'left:\s*([^;]+);').firstMatch(style);
       if (leftMatch == null) continue;
-      final left = double.tryParse(leftMatch.group(1) ?? '');
-      if (left == null) continue;
+      final leftStr = leftMatch.group(1) ?? '';
 
-      final weekday = weekdayForLeft(left);
+      final weekday = weekdayForLeft(leftStr);
       if (weekday == null) continue;
 
+      // Parse top and height to determine start and end times
+      final topMatch = RegExp(r'top:\s*([0-9]*\.?[0-9]+)px').firstMatch(style);
+      final heightMatch = RegExp(
+        r'height:\s*([0-9]*\.?[0-9]+)px',
+      ).firstMatch(style);
+
+      String startTime = '';
+      String endTime = '';
+      if (topMatch != null && heightMatch != null) {
+        final top = double.tryParse(topMatch.group(1) ?? '');
+        final height = double.tryParse(heightMatch.group(1) ?? '');
+        if (top != null && height != null) {
+          startTime = timeForTop(top) ?? '';
+          endTime = timeForTop(top + height) ?? '';
+        }
+      }
+
+      // Parse the lesson content - replace <br> tags with newlines first
       final inner = item.innerHtml.replaceAll(
         RegExp(r'<br\s*/?>', caseSensitive: false),
         '\n',
@@ -77,7 +128,6 @@ class Timetable {
       List<String> teachers = [];
 
       if (lines.length >= 2) {
-        // Fallback parsing: expect "CODE GROUP Teachers..." on the second line
         final parts = lines[1].split(RegExp(r'\s+'));
         if (parts.isNotEmpty) {
           courseCode = parts[0];
@@ -94,21 +144,15 @@ class Timetable {
         }
       }
 
-      String startTime = '';
-      String endTime = '';
-      if (lines.length >= 3) {
-        final timeLine = lines[2].replaceAll('\u00a0', ' ');
-        final tmatch = RegExp(
-          r'(\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*[–-]\s*(\d{1,2}:\d{2}\s*(?:AM|PM)?)',
-          caseSensitive: false,
-        ).firstMatch(timeLine);
-        if (tmatch != null) {
-          startTime = tmatch.group(1)?.trim() ?? '';
-          endTime = tmatch.group(2)?.trim() ?? '';
-        }
+      // Extract room from "ROOM: XXXXX" pattern
+      String room = '';
+      final roomMatch = RegExp(
+        r'ROOM:\s*([^\s<]+)',
+        caseSensitive: false,
+      ).firstMatch(inner);
+      if (roomMatch != null) {
+        room = roomMatch.group(1)?.trim() ?? '';
       }
-
-      final room = '';
 
       final lesson = Lesson(
         teachers: teachers,
