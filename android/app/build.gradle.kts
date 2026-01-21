@@ -50,11 +50,23 @@ android {
         }
     }
 
+    // Configure existing debug signing config if present instead of creating a new one
+    signingConfigs.findByName("debug")?.apply {
+        keyAlias = keystoreProperties.getProperty("keyAlias") ?: ""
+        keyPassword = keystoreProperties.getProperty("keyPassword") ?: ""
+        storeFile = keystoreProperties.getProperty("storeFile")?.let { file(it) }
+        storePassword = keystoreProperties.getProperty("storePassword") ?: ""
+    }
+
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+        }
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
         }
     }
 }

@@ -226,36 +226,30 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
                 if (!url.toString().contains('authToken') &&
                     url.toString().startsWith('https://my.nulc.ac.uk')) {
                   try {
-                    if (mounted) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) {
-                          // Close any open dialogs first
-                          if (Navigator.canPop(context)) {
-                            Navigator.of(
-                              context,
-                            ).popUntil((route) => route.isFirst);
-                          }
-                          // Show error dialog
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text('Cannot Login'),
-                              content: const Text(
-                                'This error is commonly caused by being connected to college wifi which prevents this page from redirecting to the login screen.\n\nPlease try again using mobile data or a different network.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(ctx).pop();
-                                  },
-                                  child: const Text('Close'),
-                                ),
-                              ],
+                    if (ctx.mounted) {
+                      // Close any open dialogs first
+                      if (Navigator.canPop(ctx)) {
+                        Navigator.of(ctx).popUntil((route) => route.isFirst);
+                      }
+                      // Show error dialog
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Cannot Login'),
+                          content: const Text(
+                            'This error is commonly caused by being connected to college wifi which prevents this page from redirecting to the login screen.\n\nPlease try again using mobile data or a different network.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(ctx).pop();
+                              },
+                              child: const Text('Close'),
                             ),
-                          );
-                        }
-                      });
+                          ],
+                        ),
+                      );
                     }
                   } catch (e) {
                     debugPrint('Error showing login error dialog: $e');
@@ -282,24 +276,17 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
                     await settings.setKey('cookies', cookies.toString());
                     await settings.setBool('loggedin', true);
 
-                    // Get timetable
-                    await NSCGRequests().getTimeTable();
-
-                    // Schedule the navigation for the next frame
-                    if (mounted) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) {
-                          context.go('/Timetable');
-                        }
-                      });
-                    }
-
                     // Clean up after navigation is scheduled
                     await _cookieManager.deleteAllCookies();
+
+                    _loadExamTimetable();
+
+                    Navigator.of(ctx).pop(); // Close the login dialog
                   } catch (e) {
                     debugPrint('Login error: $e');
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                    if (ctx.mounted) {
+                      // ignore: use_build_context_synchronously
+                      ScaffoldMessenger.of(ctx).showSnackBar(
                         const SnackBar(
                           content: Text(
                             'Error during login. Please try again.',
@@ -368,10 +355,6 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
         ),
         title: const Text('Exam Timetable'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _isLoading ? null : _reloadExamTimetable,
-          ),
           if (_examTimetable?.studentInfo != null)
             IconButton(
               icon: const Icon(Icons.info_outline),
@@ -379,6 +362,10 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
                 context.push('/exams/details');
               },
             ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _isLoading ? null : _reloadExamTimetable,
+          ),
         ],
       ),
       body: SafeArea(child: _buildBody()),

@@ -111,17 +111,11 @@ class _LoginState extends State<Login> {
                 // Get timetable
                 await NSCGRequests().getTimeTable();
 
-                // Schedule the navigation for the next frame
-                if (mounted) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) {
-                      context.go('/Timetable');
-                    }
-                  });
-                }
-
                 // Clean up after navigation is scheduled
                 await _cookieManager.deleteAllCookies();
+
+                // ignore: use_build_context_synchronously
+                context.go('/Timetable');
               } catch (e) {
                 debugPrint('Login error: $e');
                 if (mounted) {

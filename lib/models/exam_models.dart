@@ -60,7 +60,9 @@ class ExamTimetable {
     final studentTable = document.querySelector('table.student_ident');
     if (studentTable != null) {
       final cells = studentTable.querySelectorAll('td');
-      if (cells.length >= 8) {
+      // The student_ident table often contains 5 <td> cells (ref, name, dob, uln, candidate no).
+      // Accept 5 or more to support the common markup seen in real pages.
+      if (cells.length >= 5) {
         studentInfo = StudentInfo(
           refNo: cells[0].text.trim(),
           name: cells[1].text.trim(),

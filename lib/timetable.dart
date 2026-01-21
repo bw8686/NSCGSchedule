@@ -45,6 +45,10 @@ class _TimetableScreenState extends State<TimetableScreen> {
   // Current debug time (only used when _debugMode is true)
   DateTime _debugNow = DateTime.now();
   StreamSubscription<void>? _resub;
+  StreamSubscription<bool>? _debugSub;
+  StreamSubscription<bool>? _updateSub;
+  StreamSubscription<bool>? _loggedinSub;
+  StreamSubscription<void>? _notificationResub;
 
   @override
   void initState() {
@@ -57,26 +61,32 @@ class _TimetableScreenState extends State<TimetableScreen> {
       _scheduleNotifications();
     });
 
-    _notificationService.onReschedule.listen((_) {
-      _scheduleNotifications();
+    _notificationResub = _notificationService.onReschedule.listen((_) {
+      if (mounted) _scheduleNotifications();
     });
 
-    _requests.debugModeController.stream.listen((value) {
-      setState(() {
-        _debugMode = value;
-      });
+    _debugSub = _requests.debugModeController.stream.listen((value) {
+      if (mounted) {
+        setState(() {
+          _debugMode = value;
+        });
+      }
     });
 
-    _requests.updateController.stream.listen((value) {
-      setState(() {
-        _update = value;
-      });
+    _updateSub = _requests.updateController.stream.listen((value) {
+      if (mounted) {
+        setState(() {
+          _update = value;
+        });
+      }
     });
 
-    _requests.loggedinController.stream.listen((value) {
-      setState(() {
-        _loggedin = value;
-      });
+    _loggedinSub = _requests.loggedinController.stream.listen((value) {
+      if (mounted) {
+        setState(() {
+          _loggedin = value;
+        });
+      }
     });
   }
 
@@ -88,7 +98,12 @@ class _TimetableScreenState extends State<TimetableScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _timer?.cancel();
     _resub?.cancel();
+    _debugSub?.cancel();
+    _updateSub?.cancel();
+    _loggedinSub?.cancel();
+    _notificationResub?.cancel();
     super.dispose();
   }
 
@@ -398,36 +413,30 @@ class _TimetableScreenState extends State<TimetableScreen> {
                 if (!url.toString().contains('authToken') &&
                     url.toString().startsWith('https://my.nulc.ac.uk')) {
                   try {
-                    if (mounted) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) {
-                          // Close any open dialogs first
-                          if (Navigator.canPop(context)) {
-                            Navigator.of(
-                              context,
-                            ).popUntil((route) => route.isFirst);
-                          }
-                          // Show error dialog
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text('Cannot Login'),
-                              content: const Text(
-                                'This error is commonly caused by being connected to college wifi which prevents this page from redirecting to the login screen.\n\nPlease try again using mobile data or a different network.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(ctx).pop();
-                                  },
-                                  child: const Text('Close'),
-                                ),
-                              ],
+                    if (ctx.mounted) {
+                      // Close any open dialogs first
+                      if (Navigator.canPop(ctx)) {
+                        Navigator.of(ctx).popUntil((route) => route.isFirst);
+                      }
+                      // Show error dialog
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Cannot Login'),
+                          content: const Text(
+                            'This error is commonly caused by being connected to college wifi which prevents this page from redirecting to the login screen.\n\nPlease try again using mobile data or a different network.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(ctx).pop();
+                              },
+                              child: const Text('Close'),
                             ),
-                          );
-                        }
-                      });
+                          ],
+                        ),
+                      );
                     }
                   } catch (e) {
                     debugPrint('Error showing login error dialog: $e');
@@ -454,24 +463,17 @@ class _TimetableScreenState extends State<TimetableScreen> {
                     await settings.setKey('cookies', cookies.toString());
                     await settings.setBool('loggedin', true);
 
-                    // Get timetable
-                    await NSCGRequests().getTimeTable();
-
-                    // Schedule the navigation for the next frame
-                    if (mounted) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) {
-                          context.go('/Timetable');
-                        }
-                      });
-                    }
-
                     // Clean up after navigation is scheduled
                     await _cookieManager.deleteAllCookies();
+
+                    _loadTimetable();
+
+                    Navigator.of(ctx).pop(); // Close the login dialog
                   } catch (e) {
                     debugPrint('Login error: $e');
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                    if (ctx.mounted) {
+                      // ignore: use_build_context_synchronously
+                      ScaffoldMessenger.of(ctx).showSnackBar(
                         const SnackBar(
                           content: Text(
                             'Error during login. Please try again.',
@@ -519,14 +521,14 @@ class _TimetableScreenState extends State<TimetableScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _isLoading ? null : _reloadTimetable,
-          ),
-          IconButton(
             icon: Icon(_update ? Icons.settings_suggest : Icons.settings),
             onPressed: () {
               context.push('/settings');
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _isLoading ? null : _reloadTimetable,
           ),
         ],
       ),
