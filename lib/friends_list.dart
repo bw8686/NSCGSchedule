@@ -535,6 +535,7 @@ class _FriendsListScreenState extends State<FriendsListScreen> {
   Widget _buildBadgesRow(Friend friend) {
     final badges = BadgesService.instance.getBadgesFor(friend);
     if (badges.isEmpty) return const SizedBox.shrink();
+    final size = Theme.of(context).textTheme.titleLarge?.fontSize ?? 20;
     return Row(
       children: badges.map((b) {
         final icon =
@@ -542,7 +543,7 @@ class _FriendsListScreenState extends State<FriendsListScreen> {
             ? BadgesService.iconMap[b.icon]
             : Icons.label;
         return Padding(
-          padding: const EdgeInsets.only(left: 6.0),
+          padding: const EdgeInsets.only(left: 3.0),
           child: FutureBuilder<File?>(
             future: BadgesService.instance.getBadgeImageFile(b),
             builder: (context, snapshot) {
@@ -550,40 +551,19 @@ class _FriendsListScreenState extends State<FriendsListScreen> {
               if (snapshot.hasData && snapshot.data != null) {
                 content = Image.file(
                   snapshot.data!,
-                  width: 16,
-                  height: 16,
+                  width: size,
+                  height: size,
                   fit: BoxFit.contain,
                 );
               } else {
                 content = Icon(
                   icon,
-                  size: 14,
-                  color: Theme.of(context).colorScheme.onSecondaryContainer,
+                  size: size,
+                  color: Theme.of(context).colorScheme.tertiary,
                 );
               }
 
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    content,
-                    const SizedBox(width: 6),
-                    Text(
-                      b.shortLabel ?? b.label,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSecondaryContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              );
+              return Tooltip(message: b.label, child: content);
             },
           ),
         );

@@ -8,10 +8,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:crypto/crypto.dart';
 
 class BadgeDefinition {
-  final List<String> ids; // plain ids like "C243879"
+  final List<String> ids; // plain ids like "C123456"
   final List<String> hashes; // optional sha256 hex strings
   final String label;
-  final String? shortLabel;
   final String? icon; // material icon name
   final String? imageUrl; // optional image URL
   final int priority;
@@ -20,7 +19,6 @@ class BadgeDefinition {
     required this.ids,
     required this.hashes,
     required this.label,
-    this.shortLabel,
     this.icon,
     this.imageUrl,
     required this.priority,
@@ -28,10 +26,17 @@ class BadgeDefinition {
 
   factory BadgeDefinition.fromMap(Map<String, dynamic> m) {
     return BadgeDefinition(
-      ids: (m['ids'] as List?)?.map((e) => e.toString()).toList() ?? [],
-      hashes: (m['hashes'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      ids:
+          (m['ids'] as List?)
+              ?.map((e) => e.toString().toLowerCase())
+              .toList() ??
+          [],
+      hashes:
+          (m['hashes'] as List?)
+              ?.map((e) => e.toString().toLowerCase())
+              .toList() ??
+          [],
       label: m['label'] ?? '',
-      shortLabel: m['shortLabel'],
       icon: m['icon'],
       imageUrl: m['imageUrl'],
       priority: (m['priority'] is int) ? m['priority'] as int : 0,
@@ -104,22 +109,22 @@ class BadgesService {
     final results = <BadgeDefinition>[];
     final candidates = _definitions;
     final idsToCheck = <String>[];
-    if (userId != null) idsToCheck.add(userId);
-    if (id != null) idsToCheck.add(id);
+    if (userId != null) idsToCheck.add(userId.toLowerCase());
+    if (id != null) idsToCheck.add(id.toLowerCase());
 
     final hashesToCheck = idsToCheck.map((s) => _sha256Hex(s)).toList();
 
     for (final d in candidates) {
       bool matched = false;
       for (final plain in d.ids) {
-        if (idsToCheck.contains(plain)) {
+        if (idsToCheck.contains(plain.toLowerCase())) {
           matched = true;
           break;
         }
       }
       if (!matched && d.hashes.isNotEmpty) {
         for (final h in d.hashes) {
-          if (hashesToCheck.contains(h)) {
+          if (hashesToCheck.contains(h.toLowerCase())) {
             matched = true;
             break;
           }
@@ -177,7 +182,8 @@ class BadgesService {
   }
 
   String _sha256Hex(String input) {
-    final bytes = utf8.encode(input);
+    final normalized = input.toLowerCase();
+    final bytes = utf8.encode(normalized);
     final digest = sha256.convert(bytes);
     return digest.toString();
   }
