@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:nscgschedule/settings.dart';
+import 'package:nscgschedule/requests.dart';
 
 /// Service to handle communication with WearOS companion app
 class WatchService {
@@ -66,8 +67,34 @@ class WatchService {
   /// Call this when the timetable is updated
   Future<void> syncTimetable() async {
     try {
-      var timetableData = await settings.getMap('timetable');
-      var timetableUpdated = await settings.getKey('timetableUpdated');
+      // If the user is logged in on mobile, attempt to fetch a fresh
+      // timetable from the server before sending. If the fetch fails or
+      // the user is not logged in, fall back to the stored timetable.
+      final loggedin = await settings.getBool('loggedin');
+
+      Map<String, dynamic> timetableData = {};
+      String? timetableUpdated;
+
+      if (loggedin) {
+        try {
+          final fetched = await NSCGRequests.instance.getTimeTable(
+            notifyWatch: false,
+          );
+          if (fetched != null) {
+            timetableData = fetched.toJson();
+            timetableUpdated = await settings.getKey('timetableUpdated');
+          }
+        } catch (e) {
+          // ignore and fall back to stored data
+        }
+      }
+
+      // If we don't have fetched data, use stored data
+      if (timetableData.isEmpty) {
+        timetableData = await settings.getMap('timetable');
+        timetableUpdated = await settings.getKey('timetableUpdated');
+      }
+
       if (timetableData.isNotEmpty) {
         await _sendDataToWatch({
           'timetable': timetableData,
@@ -84,8 +111,33 @@ class WatchService {
   /// Call this when the exam timetable is updated
   Future<void> syncExamTimetable() async {
     try {
-      var examData = await settings.getMap('examTimetable');
-      var examUpdated = await settings.getKey('examTimetableUpdated');
+      // Try to fetch a fresh exam timetable when the mobile app is logged in,
+      // otherwise fall back to the stored exam timetable.
+      final loggedin = await settings.getBool('loggedin');
+
+      Map<String, dynamic> examData = {};
+      String? examUpdated;
+
+      if (loggedin) {
+        try {
+          final fetched = await NSCGRequests.instance.getExamTimetable(
+            notifyWatch: false,
+          );
+          if (fetched != null) {
+            examData = fetched.toJson();
+            examUpdated = await settings.getKey('examTimetableUpdated');
+          }
+        } catch (e) {
+          // ignore and fall back to stored data
+        }
+      }
+
+      // If no fetched data available, use stored data
+      if (examData.isEmpty) {
+        examData = await settings.getMap('examTimetable');
+        examUpdated = await settings.getKey('examTimetableUpdated');
+      }
+
       if (examData.isNotEmpty) {
         await _sendDataToWatch({
           'examTimetable': examData,

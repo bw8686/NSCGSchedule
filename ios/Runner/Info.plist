@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- Usage descriptions for camera and photo library -->
+	<key>NSCameraUsageDescription</key>
+	<string>NSCGSchedule needs camera access to scan QR codes and take profile pictures.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>NSCGSchedule needs access to your photo library to select profile pictures and QR images.</string>
 </dict>
 </plist>

@@ -139,6 +139,17 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
 
   Future<void> _loadExamTimetable() async {
     if (!mounted) return;
+    // Avoid attempting to fetch exams when the user is not logged in.
+    final isLoggedIn = await settings.getBool('loggedin');
+    if (!isLoggedIn) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _loggedin = false;
+        });
+      }
+      return;
+    }
     if (_error.isNotEmpty) {
       setState(() {
         _error = '';
@@ -275,13 +286,19 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
                     );
                     await settings.setKey('cookies', cookies.toString());
                     await settings.setBool('loggedin', true);
+                    // Notify other listeners that login state changed
+                    try {
+                      _requests.loggedinController.add(true);
+                    } catch (_) {}
 
                     // Clean up after navigation is scheduled
                     await _cookieManager.deleteAllCookies();
 
                     _loadExamTimetable();
 
-                    Navigator.of(ctx).pop(); // Close the login dialog
+                    if (ctx.mounted) {
+                      Navigator.of(ctx).pop(); // Close the login dialog
+                    }
                   } catch (e) {
                     debugPrint('Login error: $e');
                     if (ctx.mounted) {
@@ -338,21 +355,54 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
     return date;
   }
 
+  Widget _buildEmptyStateExam() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_note,
+              size: 120,
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No Exam Timetable',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Fetch your exam timetable. If you are not logged in, you will be prompted to log in first.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: () async {
+                await _reloadExamTimetable();
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Fetch Exams'),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.of(context).pop();
-            } else {
-              // If there's no back stack, go to the main timetable
-              context.go('/Timetable');
-            }
-          },
-        ),
         title: const Text('Exam Timetable'),
         actions: [
           if (_examTimetable?.studentInfo != null)
@@ -395,7 +445,7 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
     }
 
     if (_examTimetable == null) {
-      return const Center(child: Text('No exam timetable data available'));
+      return _buildEmptyStateExam();
     }
 
     if (!_examTimetable!.hasExams) {
@@ -407,25 +457,7 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
             height: MediaQuery.of(context).size.height - 200,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No exams found',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text('You currently have no scheduled exams.'),
-                ],
-              ),
-            ),
+            child: Center(child: _buildEmptyStateExam()),
           ),
         ),
       );
@@ -433,6 +465,22 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
 
     return Column(
       children: [
+        if (_examTimetableUpdated.isNotEmpty)
+          Container(
+            width: double.infinity,
+            color: Theme.of(context).colorScheme.surfaceContainer,
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'Last updated: ${_formatTimestamp(_examTimetableUpdated)}  ${_loggedin ? '(Logged in)' : '(Not logged in)'}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontStyle: FontStyle.italic,
+                color: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
         if (_examTimetable!.warningMessage != null)
           Container(
             width: double.infinity,
@@ -553,20 +601,6 @@ class _ExamTimetableScreenState extends State<ExamTimetableScreen> {
             ),
           ),
         ),
-        if (_examTimetableUpdated.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              'Last updated: ${_formatTimestamp(_examTimetableUpdated)}  ${_loggedin ? '(Logged in)' : '(Not logged in)'}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontStyle: FontStyle.italic,
-                color: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
       ],
     );
   }

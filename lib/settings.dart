@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
 import 'package:hive_ce/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 final Settings settings = GetIt.I<Settings>();
 
@@ -17,6 +21,11 @@ class Settings {
   static const String _notifyOnStartTimeKey = 'notifyOnStartTime';
 
   late final SharedPreferences _prefs;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  Box? _secureBox;
+  bool _secureBoxInitialized = false;
+
+  static const _hiveEncryptionKeyName = 'hive_encryption_key';
   final _themeChangeController = StreamController<bool>.broadcast();
   final _notificationSettingsChangeController =
       StreamController<void>.broadcast();
@@ -35,6 +44,37 @@ class Settings {
       Hive.init(dir.path);
     }
     return await Hive.openBox('settings');
+  }
+
+  Future<Uint8List> _getOrCreateEncryptionKey() async {
+    try {
+      final existing = await _secureStorage.read(key: _hiveEncryptionKeyName);
+      if (existing != null && existing.isNotEmpty) {
+        return base64Url.decode(existing);
+      }
+    } catch (_) {
+      // ignore and generate new
+    }
+
+    final key = List<int>.generate(32, (_) => Random.secure().nextInt(256));
+    final encoded = base64UrlEncode(key);
+    await _secureStorage.write(key: _hiveEncryptionKeyName, value: encoded);
+    return Uint8List.fromList(key);
+  }
+
+  Future<Box> _getSecureBox() async {
+    if (_secureBoxInitialized && _secureBox != null) return _secureBox!;
+    final dir = await getApplicationSupportDirectory();
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.init(dir.path);
+    }
+    final key = await _getOrCreateEncryptionKey();
+    _secureBox = await Hive.openBox(
+      'secure_settings',
+      encryptionCipher: HiveAesCipher(key),
+    );
+    _secureBoxInitialized = true;
+    return _secureBox!;
   }
 
   Future<void> setKey(String key, String value) async {
@@ -73,8 +113,14 @@ class Settings {
   }
 
   Future<void> setMap(String key, Map<String, dynamic> value) async {
-    final box = await _getBox();
-    await box.put(key, value);
+    // Use encrypted storage for sensitive timetable data
+    if (key == 'timetable' || key == 'examTimetable') {
+      final box = await _getSecureBox();
+      await box.put(key, value);
+    } else {
+      final box = await _getBox();
+      await box.put(key, value);
+    }
   }
 
   Future<Map<String, dynamic>> getMap(
@@ -82,7 +128,9 @@ class Settings {
     Map<String, dynamic>? defaultValue,
   }) async {
     try {
-      final box = await _getBox();
+      final box = (key == 'timetable' || key == 'examTimetable')
+          ? await _getSecureBox()
+          : await _getBox();
       final value = box.get(key, defaultValue: defaultValue ?? {});
       if (value is Map) {
         // Convert all keys to String and handle nested maps

@@ -1,0 +1,623 @@
+import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nscgschedule/friends_service.dart';
+import 'package:nscgschedule/models/friend_models.dart';
+import 'package:intl/intl.dart';
+import 'package:nscgschedule/badges_service.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'dart:async';
+import 'package:nscgschedule/debug_service.dart';
+
+class FriendProfileScreen extends StatefulWidget {
+  final String friendId;
+
+  const FriendProfileScreen({super.key, required this.friendId});
+
+  @override
+  State<FriendProfileScreen> createState() => _FriendProfileScreenState();
+}
+
+class _FriendProfileScreenState extends State<FriendProfileScreen> {
+  final FriendsService _friendsService = GetIt.I<FriendsService>();
+  Friend? _friend;
+  bool _isLoading = true;
+  Timer? _refreshTimer;
+  final DebugService _debug = GetIt.I<DebugService>();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFriend();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _loadFriend() {
+    setState(() => _isLoading = true);
+    final friend = _friendsService.getFriend(widget.friendId);
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {});
+    });
+    setState(() {
+      _friend = friend;
+      _isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Friend Profile')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_friend == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Friend Profile')),
+        body: const Center(child: Text('Friend not found')),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_friend!.name),
+        actions: [
+          IconButton(icon: const Icon(Icons.edit), onPressed: _editName),
+          IconButton(icon: const Icon(Icons.delete), onPressed: _confirmDelete),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 8),
+            _buildActions(),
+            const SizedBox(height: 16),
+            _buildSchedulePreview(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 50,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundImage:
+                _friend!.profilePicPath != null &&
+                    _friend!.profilePicPath!.isNotEmpty
+                ? FileImage(File(_friend!.profilePicPath!))
+                : null,
+            child:
+                _friend!.profilePicPath == null ||
+                    _friend!.profilePicPath!.isEmpty
+                ? Text(
+                    _friend!.name.isNotEmpty
+                        ? _friend!.name[0].toUpperCase()
+                        : '?',
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _friend!.name,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildBadgesRow(_friend!),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                _getPrivacyIcon(_friend!.privacyLevel),
+                size: 18,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                _getPrivacyLabel(_friend!.privacyLevel),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Added ${DateFormat.yMMMd().format(_friend!.addedAt)}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(
+                context,
+              ).colorScheme.onPrimaryContainer.withValues(alpha: 0.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActions() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: () {
+                context.push('/friends/gaps/${_friend!.id}');
+              },
+              icon: const Icon(Icons.event_available),
+              label: const Text('Find Gaps'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _setProfilePicture,
+              icon: const Icon(Icons.photo_camera),
+              label: const Text('Set Profile Picture'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSchedulePreview() {
+    return Card(
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_month,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Weekly Schedule',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                Text(
+                  '${_friend!.timetable.days.fold<int>(0, (sum, d) => sum + d.lessons.length)} lessons',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Column(
+              children: _friend!.timetable.days
+                  .map((day) => _buildDayRow(day))
+                  .toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDayRow(FriendDaySchedule day) {
+    final accent = Theme.of(context).colorScheme.primary;
+    final now = _debug.enabled ? _debug.now : DateTime.now();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        child: Text(
+                          DateFormat.EEEE().format(now) == day.weekday
+                              ? '• ${day.weekday}'
+                              : day.weekday,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    DateFormat.EEEE().format(now) == day.weekday
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      day.lessons.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              child: Text(
+                                'No classes',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withAlpha(0x88),
+                                    ),
+                              ),
+                            )
+                          : Column(
+                              children: day.lessons.map((lesson) {
+                                // determine if this lesson is the current lesson (uses debug-aware `now` from outer scope)
+                                bool isCurrent = false;
+                                final todayName = DateFormat.EEEE().format(now);
+                                if (todayName == day.weekday) {
+                                  try {
+                                    final start = DateFormat.Hm().parse(
+                                      lesson.startTime,
+                                    );
+                                    final end = DateFormat.Hm().parse(
+                                      lesson.endTime,
+                                    );
+                                    final startToday = DateTime(
+                                      now.year,
+                                      now.month,
+                                      now.day,
+                                      start.hour,
+                                      start.minute,
+                                    );
+                                    final endToday = DateTime(
+                                      now.year,
+                                      now.month,
+                                      now.day,
+                                      end.hour,
+                                      end.minute,
+                                    );
+                                    isCurrent =
+                                        (now.isAfter(startToday) &&
+                                            now.isBefore(endToday)) ||
+                                        now.isAtSameMomentAs(startToday) ||
+                                        now.isAtSameMomentAs(endToday);
+                                  } catch (e) {
+                                    isCurrent = false;
+                                  }
+                                } else {
+                                  isCurrent = false;
+                                }
+
+                                final sideColor = isCurrent
+                                    ? Theme.of(context).colorScheme.secondary
+                                    : accent;
+
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: IntrinsicHeight(
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Container(
+                                          width: 6,
+                                          decoration: BoxDecoration(
+                                            color: sideColor,
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                                  topLeft: Radius.circular(8),
+                                                  bottomLeft: Radius.circular(
+                                                    8,
+                                                  ),
+                                                ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text.rich(
+                                                  TextSpan(
+                                                    text:
+                                                        '${lesson.startTime} - ${lesson.endTime}',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall
+                                                        ?.copyWith(
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                    children: [
+                                                      WidgetSpan(
+                                                        child: const SizedBox(
+                                                          width: 8,
+                                                        ),
+                                                      ),
+                                                      if (lesson.name != null &&
+                                                          lesson
+                                                              .name!
+                                                              .isNotEmpty)
+                                                        TextSpan(
+                                                          text: lesson.name!,
+                                                          style:
+                                                              Theme.of(context)
+                                                                  .textTheme
+                                                                  .bodyMedium,
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                if (lesson.room != null &&
+                                                    lesson.room!.isNotEmpty)
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          top: 6,
+                                                        ),
+                                                    child: Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons.place,
+                                                          size: 14,
+                                                          color: Theme.of(context)
+                                                              .colorScheme
+                                                              .onSurfaceVariant,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 6,
+                                                        ),
+                                                        Text(
+                                                          lesson.room!,
+                                                          style: Theme.of(context)
+                                                              .textTheme
+                                                              .bodySmall
+                                                              ?.copyWith(
+                                                                color: Theme.of(context)
+                                                                    .colorScheme
+                                                                    .onSurfaceVariant,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _setProfilePicture() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? file = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        maxHeight: 1200,
+      );
+      if (file == null) return;
+      final updated = _friend!.copyWith(profilePicPath: file.path);
+      await _friendsService.saveFriend(updated);
+      _loadFriend();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error selecting image: $e')));
+      }
+    }
+  }
+
+  void _editName() {
+    final controller = TextEditingController(text: _friend!.name);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Name'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Nickname or display name',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isEmpty) return;
+              final updated = _friend!.copyWith(name: newName);
+              await _friendsService.saveFriend(updated);
+              _loadFriend();
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Friend?'),
+        content: Text('Are you sure you want to remove ${_friend!.name}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              await _friendsService.deleteFriend(_friend!.id);
+              if (context.mounted) {
+                Navigator.pop(context); // Close dialog
+                context.pop(); // Go back to friends list
+              }
+            },
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getPrivacyIcon(PrivacyLevel level) {
+    switch (level) {
+      case PrivacyLevel.freeTimeOnly:
+        return Icons.lock;
+      case PrivacyLevel.busyBlocks:
+        return Icons.lock_open;
+      case PrivacyLevel.fullDetails:
+        return Icons.visibility;
+    }
+  }
+
+  String _getPrivacyLabel(PrivacyLevel level) {
+    switch (level) {
+      case PrivacyLevel.freeTimeOnly:
+        return 'Free Time Only';
+      case PrivacyLevel.busyBlocks:
+        return 'Busy Blocks';
+      case PrivacyLevel.fullDetails:
+        return 'Full Details';
+    }
+  }
+
+  Widget _buildBadgesRow(Friend friend) {
+    final badges = BadgesService.instance.getBadgesFor(friend);
+    if (badges.isEmpty) return const SizedBox.shrink();
+    return Row(
+      children: badges.map((b) {
+        final icon =
+            (b.icon != null && BadgesService.iconMap.containsKey(b.icon))
+            ? BadgesService.iconMap[b.icon]
+            : Icons.label;
+        return Padding(
+          padding: const EdgeInsets.only(left: 6.0),
+          child: FutureBuilder<File?>(
+            future: BadgesService.instance.getBadgeImageFile(b),
+            builder: (context, snapshot) {
+              Widget content;
+              if (snapshot.hasData && snapshot.data != null) {
+                content = Image.file(
+                  snapshot.data!,
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                );
+              } else {
+                content = Icon(
+                  icon,
+                  size: 14,
+                  color: Theme.of(context).colorScheme.onSecondaryContainer,
+                );
+              }
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    content,
+                    const SizedBox(width: 6),
+                    Text(
+                      b.shortLabel ?? b.label,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSecondaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      }).toList(),
+    );
+  }
+}

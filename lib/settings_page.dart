@@ -5,8 +5,8 @@ import 'package:nscgschedule/settings.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nscgschedule/notifications.dart';
+import 'package:nscgschedule/badges_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -120,13 +120,18 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final String? normalizedPackageVersion = _packageInfo?.version == null
+        ? null
+        : (_packageInfo!.version.contains('-')
+              ? _packageInfo!.version.split('-')[0]
+              : _packageInfo!.version);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
+        // leading: IconButton(
+        //   icon: const Icon(Icons.arrow_back),
+        //   onPressed: () => context.pop(),
+        // ),
       ),
       body: DynamicColorBuilder(
         builder: (lightDynamic, darkDynamic) {
@@ -148,11 +153,11 @@ class _SettingsPageState extends State<SettingsPage> {
 
           return ListView(
             children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Text(
                   'Appearance',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
               ValueListenableBuilder<ThemeMode>(
@@ -222,11 +227,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
               ),
               const Divider(),
-              const Padding(
-                padding: EdgeInsets.all(16.0),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Text(
                   'Notifications',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
               SwitchListTile(
@@ -404,7 +409,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      ElevatedButton(
+                      FilledButton(
                         onPressed: () async {
                           final ns = GetIt.I<NotificationService>();
                           final m =
@@ -427,6 +432,42 @@ class _SettingsPageState extends State<SettingsPage> {
                     ],
                   ),
                 ),
+                ListTile(
+                  leading: const Icon(Icons.badge),
+                  title: const Text('Refresh Badges (debug)'),
+                  subtitle: const Text(
+                    'Force download badges.json and cache images',
+                  ),
+                  onTap: () async {
+                    final svc = BadgesService.instance;
+                    final url = svc.remoteUrl;
+                    if (url == null || url.isEmpty) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No remote badges URL configured'),
+                        ),
+                      );
+                      return;
+                    }
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Refreshing badges...')),
+                    );
+                    try {
+                      await svc.fetchAndCache(url);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Badges refreshed')),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to refresh badges: $e')),
+                      );
+                    }
+                  },
+                ),
               ],
               const Divider(),
               ListTile(
@@ -435,30 +476,18 @@ class _SettingsPageState extends State<SettingsPage> {
                 subtitle: Text(
                   _version == null
                       ? 'Checking...'
-                      : _version!['version'] == _packageInfo?.version
-                      ? 'Your up to date'
+                      : (_version!['version'] == normalizedPackageVersion)
+                      ? 'You are up to date'
                       : 'Update available',
                 ),
                 trailing:
                     _version != null &&
-                        _version!['version'] != _packageInfo?.version
+                        _version!['version'] != normalizedPackageVersion
                     ? const Icon(Icons.arrow_forward_ios)
                     : null,
-                onTap:
-                    _version != null &&
-                        _version!['url'] != null &&
-                        _version!['url'].isNotEmpty &&
-                        _version!['version'] != _packageInfo?.version
-                    ? () async {
-                        final url = Uri.parse(_version!['url']);
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(
-                            url,
-                            mode: LaunchMode.externalApplication,
-                          );
-                        }
-                      }
-                    : null,
+                onTap: () {
+                  context.go('/settings/updates');
+                },
               ),
               ListTile(
                 title: const Text('About'),
@@ -508,9 +537,16 @@ class _SettingsPageState extends State<SettingsPage> {
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('Logout'),
-                onTap: () {
-                  settings.setBool('loggedin', false);
-                  settings.setKey('timetable', '');
+                onTap: () async {
+                  await settings.setBool('loggedin', false);
+                  // Notify listeners
+                  try {
+                    NSCGRequests.instance.loggedinController.add(false);
+                  } catch (_) {}
+                  // Clear stored timetables (use encrypted storage)
+                  await settings.setMap('timetable', {});
+                  await settings.setMap('examTimetable', {});
+                  if (!context.mounted) return;
                   context.go('/');
                 },
               ),

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -9,6 +8,7 @@ import 'package:nscgschedule/models/exam_models.dart';
 import 'package:nscgschedule/settings.dart';
 import 'package:nscgschedule/watch_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:nscgschedule/updater.dart';
 
 class NSCGRequests {
   final Dio _dio = Dio();
@@ -42,7 +42,7 @@ class NSCGRequests {
     return value;
   }
 
-  Future<Timetable?> getTimeTable() async {
+  Future<Timetable?> getTimeTable({bool notifyWatch = true}) async {
     try {
       final cookiesString = await settings.getKey('cookies');
       if (cookiesString.isEmpty) {
@@ -79,14 +79,58 @@ class NSCGRequests {
           response.data != null &&
           response.realUri.toString().contains('studentTT/')) {
         Timetable timetable = Timetable.fromHtml(response.data!);
+        // Try to extract the owner's name from the HTML and save it
+        final owner = Timetable.extractOwnerName(response.data!);
+        if (owner != null && owner.isNotEmpty) {
+          final normalized = owner.replaceAll(RegExp(r'\s+'), ' ').trim();
+          await settings.setKey('timetableOwner', normalized);
+        }
+
+        // Also fetch the main homepage to extract a stable username/refNo
+        try {
+          final homeResp = await _dio.get<String>(
+            '/',
+            options: Options(
+              headers: {'Cookie': cookieHeader, 'Accept': 'text/html'},
+              responseType: ResponseType.plain,
+            ),
+          );
+          if (homeResp.statusCode == 200 && homeResp.data != null) {
+            final homeHtml = homeResp.data!;
+            // Look for patterns like "[refNo] => 123456" and "[username] => C123456"
+            final refMatch = RegExp(
+              r"\[refNo\]\s*=>\s*([0-9]+)",
+            ).firstMatch(homeHtml);
+            final userMatch = RegExp(
+              r"\[username\]\s*=>\s*([A-Za-z0-9_@.-]+)",
+            ).firstMatch(homeHtml);
+            if (refMatch != null) {
+              await settings.setKey(
+                'timetableOwnerRef',
+                refMatch.group(1) ?? '',
+              );
+            }
+            if (userMatch != null) {
+              await settings.setKey(
+                'timetableOwnerId',
+                userMatch.group(1) ?? '',
+              );
+            }
+          }
+        } catch (e) {
+          // ignore homepage parse failures
+        }
+
         await settings.setMap('timetable', timetable.toJson());
         await settings.setKey(
           'timetableUpdated',
           DateTime.now().toIso8601String(),
         );
-        // Sync with WearOS watch
-        await WatchService.instance.syncTimetable();
-        await WatchService.instance.updateContext();
+        // Sync with WearOS watch unless caller requested suppression
+        if (notifyWatch) {
+          await WatchService.instance.syncTimetable();
+          await WatchService.instance.updateContext();
+        }
         return timetable;
       } else {
         settings.setBool('loggedin', false);
@@ -98,7 +142,7 @@ class NSCGRequests {
     }
   }
 
-  Future<ExamTimetable?> getExamTimetable() async {
+  Future<ExamTimetable?> getExamTimetable({bool notifyWatch = true}) async {
     try {
       final cookiesString = await settings.getKey('cookies');
       if (cookiesString.isEmpty) {
@@ -138,9 +182,11 @@ class NSCGRequests {
           'examTimetableUpdated',
           DateTime.now().toIso8601String(),
         );
-        // Sync with WearOS watch
-        await WatchService.instance.syncExamTimetable();
-        await WatchService.instance.updateContext();
+        // Sync with WearOS watch unless caller requested suppression
+        if (notifyWatch) {
+          await WatchService.instance.syncExamTimetable();
+          await WatchService.instance.updateContext();
+        }
         return examTimetable;
       } else {
         settings.setBool('loggedin', false);
@@ -154,19 +200,23 @@ class NSCGRequests {
 
   Future<Map<String, dynamic>> updateApp() async {
     try {
-      final dio = Dio();
-      dio.options.baseUrl = 'https://raw.githubusercontent.com';
-      final response = await dio.get(
-        '/bw8686/nscgschedule/refs/heads/main/update.json',
-      );
+      final latest = await NSCGScheduleLatest.fetch();
       final packageInfo = await PackageInfo.fromPlatform();
-      final deData = jsonDecode(response.data);
-      if (deData['version'] != packageInfo.version) {
+      final currentVersion = packageInfo.version.contains('-')
+          ? packageInfo.version.split('-')[0]
+          : packageInfo.version;
+      if (latest.version != currentVersion) {
         updateController.add(true);
       } else {
         updateController.add(false);
       }
-      return deData;
+      return {
+        'version': latest.version,
+        'changelog': latest.changelog,
+        'downloads': latest.downloads
+            .map((d) => {'name': d.name, 'url': d.directUrl})
+            .toList(),
+      };
     } catch (e) {
       return {};
     }

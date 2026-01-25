@@ -14,14 +14,22 @@ class ExamTimetable {
   });
 
   factory ExamTimetable.fromJson(Map<String, dynamic> json) {
+    final student = json['studentInfo'] != null
+        ? StudentInfo.fromJson(
+            Map<String, dynamic>.from(json['studentInfo'] as Map),
+          )
+        : null;
+    final rawExams = json['exams'] as List;
+    final exams = rawExams
+        .map(
+          (examJson) =>
+              Exam.fromJson(Map<String, dynamic>.from(examJson as Map)),
+        )
+        .toList();
     return ExamTimetable(
       hasExams: json['hasExams'] as bool,
-      studentInfo: json['studentInfo'] != null
-          ? StudentInfo.fromJson(json['studentInfo'] as Map<String, dynamic>)
-          : null,
-      exams: (json['exams'] as List)
-          .map((examJson) => Exam.fromJson(examJson as Map<String, dynamic>))
-          .toList(),
+      studentInfo: student,
+      exams: exams,
       warningMessage: json['warningMessage'] as String?,
     );
   }

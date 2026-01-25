@@ -1,0 +1,26 @@
+{
+    "badges": [
+        {
+            "ids": [
+                "C243879"
+            ],
+            "hashes": [],
+            "label": "Developer",
+            "shortLabel": "Dev",
+            "icon": "developer_mode",
+            "imageUrl": null,
+            "priority": 10
+        },
+        {
+            "ids": [],
+            "hashes": [
+                "8f0b5245b9833b367660b62a024d2bbdbf150763590517236688acd33f51fc26"
+            ],
+            "label": "Beta Tester",
+            "shortLabel": "Beta",
+            "icon": "labs",
+            "imageUrl": null,
+            "priority": 5
+        }
+    ]
+}

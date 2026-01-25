@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:nscgschedule/models/friend_models.dart';
 import 'package:nscgschedule/router.dart';
 import 'package:nscgschedule/settings.dart';
 import 'package:nscgschedule/watch_service.dart';
+import 'package:nscgschedule/friends_service.dart';
+import 'package:nscgschedule/debug_service.dart';
 import 'dart:async';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nscgschedule/notifications.dart';
+import 'package:nscgschedule/updater.dart';
+import 'package:nscgschedule/badges_service.dart';
 
 final getIt = GetIt.instance;
 
@@ -23,10 +29,30 @@ Future<void> main() async {
 }
 
 Future<void> _initServices() async {
+  // Initialize Hive for local storage
+  await Hive.initFlutter();
+
+  // Register Hive adapters (run: dart run build_runner build first)
+  // Uncomment after running build_runner to generate friend_models.g.dart:
+  Hive.registerAdapter(PrivacyLevelAdapter());
+  Hive.registerAdapter(FriendAdapter());
+  Hive.registerAdapter(FriendTimetableAdapter());
+  Hive.registerAdapter(FriendDayScheduleAdapter());
+  Hive.registerAdapter(FriendLessonAdapter());
+
   // Settings
   final settings = Settings();
   await settings.init();
   getIt.registerSingleton<Settings>(settings);
+
+  // Debug service (centralized debug time)
+  final debugService = DebugService.instance;
+  getIt.registerSingleton<DebugService>(debugService);
+
+  // Friends Service (will work after adapters are registered)
+  final friendsService = FriendsService();
+  await friendsService.init();
+  getIt.registerSingleton<FriendsService>(friendsService);
 
   // Notification Service
   final notificationService = NotificationService();
@@ -55,6 +81,14 @@ Future<void> _initServices() async {
 
   // Watch Service for WearOS communication
   await WatchService.instance.init();
+
+  // Initialize badges system (will load cached data; optionally provide remote URL)
+  try {
+    await BadgesService.instance.init(
+      remoteJsonUrl:
+          'https://raw.githubusercontent.com/bw8686/NSCGSchedule/refs/heads/main/badges.json',
+    );
+  } catch (_) {}
 }
 
 class MyApp extends StatefulWidget {
@@ -69,12 +103,18 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool _useMaterialYou = true;
   ThemeMode _themeMode = ThemeMode.system;
   StreamSubscription<bool>? _themeChangeSubscription;
+  Timer? _updateTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initTheme();
+    // Run updater check once at startup and then once every 24 hours
+    NSCGScheduleLatest.checkUpdate();
+    _updateTimer = Timer.periodic(const Duration(hours: 24), (_) {
+      NSCGScheduleLatest.checkUpdate();
+    });
     // If a notification arrived before the app/router was ready, navigate now
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (pendingNotificationOpen != null) {
@@ -111,6 +151,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _updateTimer?.cancel();
     _themeChangeSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();

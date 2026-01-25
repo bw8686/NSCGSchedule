@@ -6,13 +6,14 @@ class Timetable {
   const Timetable({required this.days});
 
   factory Timetable.fromJson(Map<String, dynamic> json) {
-    return Timetable(
-      days: (json['days'] as List)
-          .map(
-            (dayJson) => DaySchedule.fromJson(dayJson as Map<String, dynamic>),
-          )
-          .toList(),
-    );
+    final rawDays = json['days'] as List;
+    final days = rawDays
+        .map(
+          (dayJson) =>
+              DaySchedule.fromJson(Map<String, dynamic>.from(dayJson as Map)),
+        )
+        .toList();
+    return Timetable(days: days);
   }
 
   Map<String, dynamic> toJson() {
@@ -185,6 +186,52 @@ class Timetable {
 
     return Timetable(days: days);
   }
+
+  /// Try to extract the timetable owner's name from the raw HTML returned
+  /// by the student timetable page. Returns `null` if no clear owner name
+  /// can be located.
+  static String? extractOwnerName(String html) {
+    final document = parse(html);
+
+    String normalizeName(String s) {
+      return s.replaceAll(RegExp(r"\s+"), ' ').trim();
+    }
+
+    // Look for an <h3> that contains the phrase "Your Timetable" and
+    // prefer a contained <span> if present (many pages put the name in a span).
+    final headers = document.querySelectorAll('h3');
+    for (final h in headers) {
+      final text = h.text.trim();
+      if (text.contains('Your Timetable')) {
+        final span = h.querySelector('span');
+        if (span != null) {
+          final s = normalizeName(span.text);
+          if (s.isNotEmpty) return s;
+        }
+
+        // Fallback: take the portion of the header before the phrase
+        // "Your Timetable" as the name.
+        final idx = text.indexOf('Your Timetable');
+        if (idx > 0) {
+          var name = text.substring(0, idx);
+          // Strip stray punctuation at the end and collapse whitespace
+          name = name.replaceAll(RegExp(r"[\-:,]+"), ' ');
+          name = normalizeName(name);
+          if (name.isNotEmpty) return name;
+        }
+      }
+    }
+
+    // As a last-ditch fallback try the <title> if it looks like a personal
+    // timetable title that includes a name.
+    final title = document.querySelector('title')?.text;
+    if (title != null) {
+      final t = normalizeName(title);
+      if (t.isNotEmpty && !t.toLowerCase().contains('timetable')) return t;
+    }
+
+    return null;
+  }
 }
 
 class DaySchedule {
@@ -194,14 +241,14 @@ class DaySchedule {
   const DaySchedule({required this.day, required this.lessons});
 
   factory DaySchedule.fromJson(Map<String, dynamic> json) {
-    return DaySchedule(
-      day: json['day'] as String,
-      lessons: (json['lessons'] as List)
-          .map(
-            (lessonJson) => Lesson.fromJson(lessonJson as Map<String, dynamic>),
-          )
-          .toList(),
-    );
+    final rawLessons = json['lessons'] as List;
+    final lessons = rawLessons
+        .map(
+          (lessonJson) =>
+              Lesson.fromJson(Map<String, dynamic>.from(lessonJson as Map)),
+        )
+        .toList();
+    return DaySchedule(day: json['day'] as String, lessons: lessons);
   }
 
   Map<String, dynamic> toJson() {

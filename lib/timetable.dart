@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:nscgschedule/models/timetable_models.dart' as models;
 import 'package:nscgschedule/models/exam_models.dart';
@@ -11,6 +10,7 @@ import 'package:nscgschedule/settings.dart';
 import 'package:nscgschedule/notifications.dart';
 import 'package:get_it/get_it.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:nscgschedule/debug_service.dart';
 
 // Enable interactive room editing with: --dart-define=INSERT_ROOM_NUMBERS=true
 const bool kInsertRoomNumbers = bool.fromEnvironment(
@@ -36,14 +36,10 @@ class _TimetableScreenState extends State<TimetableScreen> {
   Timer? _timer;
   String _timeRemaining = '';
   String? _nextLessonId; // Track which lesson should show the countdown
-  bool _update = false;
-  PackageInfo? _packageInfo;
   final NotificationService _notificationService =
       GetIt.I<NotificationService>();
   // Set to true to enable debug mode with simulated times
   bool _debugMode = false;
-  // Current debug time (only used when _debugMode is true)
-  DateTime _debugNow = DateTime.now();
   StreamSubscription<void>? _resub;
   StreamSubscription<bool>? _debugSub;
   StreamSubscription<bool>? _updateSub;
@@ -75,9 +71,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
 
     _updateSub = _requests.updateController.stream.listen((value) {
       if (mounted) {
-        setState(() {
-          _update = value;
-        });
+        setState(() {});
       }
     });
 
@@ -118,66 +112,11 @@ class _TimetableScreenState extends State<TimetableScreen> {
     });
   }
 
-  // Add this method for debug controls
-  Widget _buildDebugControls() {
-    if (!_debugMode) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'DEBUG CONTROLS',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Text('Current time: '),
-              Text(DateFormat('HH:mm').format(_debugNow)),
-              const Spacer(),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _debugNow = _debugNow.add(const Duration(minutes: 30));
-                    _updateTimeRemaining();
-                  });
-                },
-                child: const Text('+30m'),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _debugNow = _debugNow.subtract(const Duration(minutes: 30));
-                    _updateTimeRemaining();
-                  });
-                },
-                child: const Text('-30m'),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _debugNow = DateTime.now();
-                    _updateTimeRemaining();
-                  });
-                },
-                child: const Text('Reset'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   void _updateTimeRemaining() {
     if (_timetable == null) return;
 
-    final now = _debugMode ? _debugNow : DateTime.now();
+    final dbg = GetIt.I<DebugService>();
+    final now = dbg.enabled ? dbg.now : DateTime.now();
     final currentWeekday = now.weekday; // 1 = Monday, 7 = Sunday
     final weekdayNames = [
       'monday',
@@ -263,6 +202,50 @@ class _TimetableScreenState extends State<TimetableScreen> {
     return null;
   }
 
+  Widget _buildEmptyStateTimetable() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.calendar_month,
+              size: 120,
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No Timetable Available',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Sign in to fetch your timetable. If you are not logged in, you will be prompted to log in first.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: () async {
+                await _reloadTimetable();
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Fetch Timetable'),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Helper function to deeply convert Map<dynamic, dynamic> to Map<String, dynamic>
   Map<String, dynamic> _convertToTypedMap(Map<dynamic, dynamic> map) {
     return Map<String, dynamic>.fromIterable(
@@ -289,12 +272,16 @@ class _TimetableScreenState extends State<TimetableScreen> {
     setState(() {
       _debugMode = debugMode;
     });
+    // Initialize global debug service state (if available)
+    try {
+      final dbg = GetIt.I<DebugService>();
+      dbg.setEnabled(_debugMode);
+    } catch (_) {}
     final timetableData = await settings.getMap('timetable');
     final timetableUpdated = await settings.getKey('timetableUpdated');
     final loggedin = await settings.getBool('loggedin');
-    final update = await _requests.updateApp();
-    _update = update['version'] != _packageInfo?.version;
-    final packageInfo = await PackageInfo.fromPlatform();
+    await _requests.updateApp();
+    await PackageInfo.fromPlatform();
     if (timetableData.isNotEmpty) {
       try {
         // Convert the map and all nested maps to ensure they have the correct type
@@ -302,7 +289,6 @@ class _TimetableScreenState extends State<TimetableScreen> {
         final timetable = models.Timetable.fromJson(typedData);
         if (mounted) {
           setState(() {
-            _packageInfo = packageInfo;
             _timetable = timetable;
             _timetableUpdated = timetableUpdated;
             _error = '';
@@ -462,13 +448,19 @@ class _TimetableScreenState extends State<TimetableScreen> {
                     );
                     await settings.setKey('cookies', cookies.toString());
                     await settings.setBool('loggedin', true);
+                    // Notify other listeners that login state changed
+                    try {
+                      _requests.loggedinController.add(true);
+                    } catch (_) {}
 
                     // Clean up after navigation is scheduled
                     await _cookieManager.deleteAllCookies();
 
                     _loadTimetable();
 
-                    Navigator.of(ctx).pop(); // Close the login dialog
+                    if (ctx.mounted) {
+                      Navigator.of(ctx).pop(); // Close the login dialog
+                    }
                   } catch (e) {
                     debugPrint('Login error: $e');
                     if (ctx.mounted) {
@@ -514,19 +506,6 @@ class _TimetableScreenState extends State<TimetableScreen> {
         title: const Text('My Timetable'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.school),
-            tooltip: 'Exam Timetable',
-            onPressed: () {
-              context.push('/exams');
-            },
-          ),
-          IconButton(
-            icon: Icon(_update ? Icons.settings_suggest : Icons.settings),
-            onPressed: () {
-              context.push('/settings');
-            },
-          ),
-          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _isLoading ? null : _reloadTimetable,
           ),
@@ -559,7 +538,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
     }
 
     if (_timetable == null) {
-      return const Center(child: Text('No timetable data available'));
+      return _buildEmptyStateTimetable();
     }
 
     if (_timetable!.days.isEmpty) {
@@ -571,16 +550,15 @@ class _TimetableScreenState extends State<TimetableScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
             height: MediaQuery.of(context).size.height - 200,
-            child: const Center(
-              child: Text('No schedule available for this period'),
-            ),
+            child: _buildEmptyStateTimetable(),
           ),
         ),
       );
     }
 
     // Find the index of the current day or the next available day
-    final now = DateTime.now();
+    final dbg = GetIt.I<DebugService>();
+    final now = dbg.enabled ? dbg.now : DateTime.now();
     final currentWeekday = now.weekday;
     final weekdayNames = [
       'Monday',
@@ -625,11 +603,26 @@ class _TimetableScreenState extends State<TimetableScreen> {
       length: _timetable!.days.length,
       child: Column(
         children: [
-          if (_debugMode) _buildDebugControls(),
           TabBar(
             isScrollable: true,
             tabs: _timetable!.days.map((day) => Tab(text: day.day)).toList(),
           ),
+          if (_timetableUpdated.isNotEmpty)
+            Container(
+              width: double.infinity,
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                'Last updated: ${_formatTimestamp(_timetableUpdated)}  ${_loggedin ? '(Logged in)' : '(Not logged in)'}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontStyle: FontStyle.italic,
+                  color: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
           Expanded(
             child: TabBarView(
               children: _timetable!.days.map((day) {
@@ -682,20 +675,6 @@ class _TimetableScreenState extends State<TimetableScreen> {
               }).toList(),
             ),
           ),
-          if (_timetableUpdated.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'Last updated: ${_formatTimestamp(_timetableUpdated)}  ${_loggedin ? '(Logged in)' : '(Not logged in)'}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontStyle: FontStyle.italic,
-                  color: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
         ],
       ),
     );
@@ -717,7 +696,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
       final beforeEnabled = await settings.getNotifyMinutesBeforeEnabled();
       final minutesBefore = await settings.getNotifyMinutesBefore();
 
-      final now = DateTime.now();
+      final dbg = GetIt.I<DebugService>();
+      final now = dbg.enabled ? dbg.now : DateTime.now();
       int notificationId = 0;
 
       String examKey(Exam exam) {
