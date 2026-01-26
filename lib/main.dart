@@ -96,10 +96,8 @@ Future<void> _initServices() async {
 
   // Initialize badges system (will load cached data; optionally provide remote URL)
   try {
-    await BadgesService.instance.init(
-      remoteJsonUrl:
-          'https://raw.githubusercontent.com/bw8686/NSCGSchedule/refs/heads/main/badges.json',
-    );
+    BadgesService.instance.remoteUrl =
+        'https://raw.githubusercontent.com/bw8686/NSCGSchedule/refs/heads/main/badges.json';
   } catch (_) {}
 }
 
@@ -122,6 +120,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initTheme();
+    // Lazily initialize badges after first frame so startup isn't blocked
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // start in background; don't await
+      BadgesService.instance.init().catchError((_) {});
+    });
     // Run updater check once at startup and then once every 24 hours
     NSCGScheduleLatest.checkUpdate();
     _updateTimer = Timer.periodic(const Duration(hours: 24), (_) {
