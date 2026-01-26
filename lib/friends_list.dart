@@ -538,9 +538,9 @@ class _FriendsListScreenState extends State<FriendsListScreen> {
     final size = Theme.of(context).textTheme.titleLarge?.fontSize ?? 20;
     return Row(
       children: badges.map((b) {
-        final icon =
-            (b.icon != null && BadgesService.iconMap.containsKey(b.icon))
-            ? BadgesService.iconMap[b.icon]
+        final iconKey = (b.icon ?? '').toLowerCase();
+        final icon = BadgesService.iconMap.containsKey(iconKey)
+            ? BadgesService.iconMap[iconKey]!
             : Icons.label;
         return Padding(
           padding: const EdgeInsets.only(left: 3.0),

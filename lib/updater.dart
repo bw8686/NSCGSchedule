@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get_it/get_it.dart';
+import 'package:nscgschedule/notifications.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
@@ -524,8 +526,39 @@ class NSCGScheduleLatest {
       // Do not enforce architecture-specific assets — pick any available APK (universal builds supported)
 
       //Show notification
-      FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-          FlutterLocalNotificationsPlugin();
+      // Prefer the app-registered NotificationService to avoid re-initializing
+      // and wiping any handlers. Fall back to a new instance if not registered.
+      NotificationService notifService;
+      try {
+        notifService = GetIt.I<NotificationService>();
+      } catch (_) {
+        notifService = NotificationService();
+        // Initialize fallback instance (no handler) — best effort
+        try {
+          await notifService.init();
+        } catch (_) {}
+      }
+      final flutterLocalNotificationsPlugin =
+          notifService.flutterLocalNotificationsPlugin;
+
+      // Ensure Android channel exists (some devices need explicit channel creation)
+      try {
+        final androidImpl = flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        if (androidImpl != null) {
+          const channel = AndroidNotificationChannel(
+            'nscgscheduleupdates',
+            'NSCGSchedule Updates',
+            description: 'NSCGSchedule update notifications',
+            importance: Importance.high,
+          );
+          await androidImpl.createNotificationChannel(channel);
+        }
+      } catch (e) {
+        Logger.root.warning('Failed to create notification channel: $e');
+      }
 
       AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -534,18 +567,29 @@ class NSCGScheduleLatest {
             channelDescription: 'NSCGSchedule Updates',
             importance: Importance.high,
             priority: Priority.high,
+            // Keep visible until user interacts
+            autoCancel: true,
           );
+
+      final darwin = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
 
       NotificationDetails notificationDetails = NotificationDetails(
         android: androidNotificationDetails,
-        iOS: null,
+        iOS: darwin,
+        macOS: darwin,
       );
 
+      // payload 'updater' will be handled in main.dart to navigate user
       await flutterLocalNotificationsPlugin.show(
         0,
         'New update available!',
-        'Update to latest version in the settings.',
+        'Tap to open updates and install the latest version.',
         notificationDetails,
+        payload: 'updater',
       );
     } catch (e) {
       Logger.root.severe('Error checking for updates', e);

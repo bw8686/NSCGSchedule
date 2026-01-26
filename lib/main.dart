@@ -71,6 +71,18 @@ Future<void> _initServices() async {
           // If navigation isn't ready yet (cold start), store for processing after app init
           pendingNotificationOpen = encoded;
         }
+        return;
+      }
+
+      if (payload == 'updater' || payload.startsWith('updater:')) {
+        try {
+          // Open updates screen
+          routerController.push('/settings/updates');
+        } catch (e) {
+          // store a token so we can navigate after router is ready
+          pendingNotificationOpen = 'updater';
+        }
+        return;
       }
     },
   );
@@ -119,10 +131,18 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (pendingNotificationOpen != null) {
         try {
-          routerController.push('/exams?open=$pendingNotificationOpen');
+          if (pendingNotificationOpen == 'updater') {
+            routerController.push('/settings/updates');
+          } else {
+            routerController.push('/exams?open=$pendingNotificationOpen');
+          }
         } catch (e) {
           try {
-            routerController.go('/exams?open=$pendingNotificationOpen');
+            if (pendingNotificationOpen == 'updater') {
+              routerController.go('/settings/updates');
+            } else {
+              routerController.go('/exams?open=$pendingNotificationOpen');
+            }
           } catch (_) {
             // give up silently; nothing more we can do here
           }

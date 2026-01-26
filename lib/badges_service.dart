@@ -191,9 +191,13 @@ class BadgesService {
   // Small mapping for common material icon names used in badges
   static const Map<String, IconData> iconMap = {
     'developer_mode': Icons.developer_mode,
+    'developer': Icons.developer_mode,
     'verified': Icons.verified,
     'star': Icons.star,
     'beta': Icons.new_releases,
     'shield': Icons.shield,
+    'handyman': Icons.handyman,
+    'labs': Icons.science,
+    'science': Icons.science,
   };
 }
