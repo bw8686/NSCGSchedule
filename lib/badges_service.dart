@@ -53,7 +53,9 @@ class BadgesService {
   String? remoteUrl;
 
   Future<void> init({String? remoteJsonUrl}) async {
-    remoteUrl = remoteJsonUrl;
+    // Only set remoteUrl when a value is provided so callers can set the
+    // property ahead of time and call init() later without clearing it.
+    if (remoteJsonUrl != null) remoteUrl = remoteJsonUrl;
     _cacheDir = await getApplicationSupportDirectory();
     await _loadCached();
     if (remoteUrl != null) {

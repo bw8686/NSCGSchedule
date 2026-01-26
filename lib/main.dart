@@ -98,6 +98,10 @@ Future<void> _initServices() async {
   try {
     BadgesService.instance.remoteUrl =
         'https://raw.githubusercontent.com/bw8686/NSCGSchedule/refs/heads/main/badges.json';
+    BadgesService.instance.init(
+      remoteJsonUrl:
+          'https://raw.githubusercontent.com/bw8686/NSCGSchedule/refs/heads/main/badges.json',
+    );
   } catch (_) {}
 }
 
