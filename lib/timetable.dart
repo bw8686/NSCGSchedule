@@ -9,7 +9,6 @@ import 'package:nscgschedule/requests.dart';
 import 'package:nscgschedule/settings.dart';
 import 'package:nscgschedule/notifications.dart';
 import 'package:get_it/get_it.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:nscgschedule/debug_service.dart';
 
 // Enable interactive room editing with: --dart-define=INSERT_ROOM_NUMBERS=true
@@ -280,8 +279,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
     final timetableData = await settings.getMap('timetable');
     final timetableUpdated = await settings.getKey('timetableUpdated');
     final loggedin = await settings.getBool('loggedin');
-    await _requests.updateApp();
-    await PackageInfo.fromPlatform();
+    _requests.updateApp();
     if (timetableData.isNotEmpty) {
       try {
         // Convert the map and all nested maps to ensure they have the correct type
