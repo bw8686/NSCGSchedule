@@ -1,0 +1,690 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- STYLE 9: Exam Details Widget - up to 8 items, scales with size -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="12dp"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background_rounded_accent">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="6dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:layout_marginEnd="6dp"
+            android:text="📝" />
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/widget_on_surface"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:text="Exam Schedule" />
+
+        <TextView
+            android:id="@+id/exam_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/widget_badge_error"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:textColor="@color/widget_on_error"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:text="8" />
+
+    </LinearLayout>
+
+    <!-- Exams container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Exam 1 -->
+        <LinearLayout
+            android:id="@+id/exam1_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background_accent"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_error"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/exam1_subject"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="Mathematics" />
+
+                <TextView
+                    android:id="@+id/exam1_room"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Hall A • Seat 42" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/exam1_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_error"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:text="Feb 10" />
+
+                <TextView
+                    android:id="@+id/exam1_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="9sp"
+                    android:text="09:00 - 11:00" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Exam 2 -->
+        <LinearLayout
+            android:id="@+id/exam2_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background_accent"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_tertiary"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/exam2_subject"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="Physics" />
+
+                <TextView
+                    android:id="@+id/exam2_room"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Hall B • Seat 15" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/exam2_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_tertiary"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:text="Feb 12" />
+
+                <TextView
+                    android:id="@+id/exam2_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="9sp"
+                    android:text="14:00 - 16:00" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Exam 3 -->
+        <LinearLayout
+            android:id="@+id/exam3_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background_accent"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_secondary"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/exam3_subject"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="Chemistry" />
+
+                <TextView
+                    android:id="@+id/exam3_room"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Hall A • Seat 23" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/exam3_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:text="Feb 15" />
+
+                <TextView
+                    android:id="@+id/exam3_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="9sp"
+                    android:text="09:00 - 12:00" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Exam 4 -->
+        <LinearLayout
+            android:id="@+id/exam4_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background_accent"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_outline"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/exam4_subject"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="Biology" />
+
+                <TextView
+                    android:id="@+id/exam4_room"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Hall C • Seat 8" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/exam4_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:text="Feb 18" />
+
+                <TextView
+                    android:id="@+id/exam4_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="9sp"
+                    android:text="10:00 - 12:00" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Exam 5 -->
+        <LinearLayout
+            android:id="@+id/exam5_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background_accent"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_primary"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/exam5_subject"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="English" />
+
+                <TextView
+                    android:id="@+id/exam5_room"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Hall D • Seat 31" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/exam5_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:text="Feb 20" />
+
+                <TextView
+                    android:id="@+id/exam5_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="9sp"
+                    android:text="14:00 - 16:30" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Exam 6 -->
+        <LinearLayout
+            android:id="@+id/exam6_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background_accent"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_tertiary"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/exam6_subject"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="History" />
+
+                <TextView
+                    android:id="@+id/exam6_room"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Hall E • Seat 19" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/exam6_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:text="Feb 22" />
+
+                <TextView
+                    android:id="@+id/exam6_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="9sp"
+                    android:text="09:00 - 11:30" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Exam 7 -->
+        <LinearLayout
+            android:id="@+id/exam7_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background_accent"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_secondary"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/exam7_subject"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="Geography" />
+
+                <TextView
+                    android:id="@+id/exam7_room"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Hall F • Seat 27" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/exam7_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:text="Feb 25" />
+
+                <TextView
+                    android:id="@+id/exam7_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="9sp"
+                    android:text="10:00 - 12:00" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Exam 8 -->
+        <LinearLayout
+            android:id="@+id/exam8_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background_accent"
+            android:paddingHorizontal="8dp"
+            android:clickable="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_outline"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/exam8_subject"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="Art" />
+
+                <TextView
+                    android:id="@+id/exam8_room"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Hall G • Seat 12" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/exam8_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:text="Feb 28" />
+
+                <TextView
+                    android:id="@+id/exam8_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="9sp"
+                    android:text="14:00 - 16:00" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Empty message -->
+    <TextView
+        android:id="@+id/empty_message"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="13sp"
+        android:visibility="gone"
+        android:text="No upcoming exams 🎉" />
+
+</LinearLayout>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- STYLE 8: Exam Countdown Widget (2x2) - Big countdown display -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/widget_background_rounded_accent">
+
+    <!-- Subject -->
+    <TextView
+        android:id="@+id/exam_subject"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/widget_on_surface"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:text="Mathematics" />
+
+    <!-- Spacer to center countdown -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="" />
+
+    <!-- Big countdown number -->
+    <TextView
+        android:id="@+id/days_number"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/widget_error"
+        android:textSize="52sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:text="3" />
+
+    <!-- Days label -->
+    <TextView
+        android:id="@+id/days_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="15sp"
+        android:gravity="center"
+        android:text="days" />
+
+    <!-- Spacer to center countdown -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="" />
+
+    <!-- Date and time -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/exam_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/widget_on_surface_variant"
+            android:textSize="11sp"
+            android:text="Wed, May 15" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/widget_on_surface_variant"
+            android:textSize="11sp"
+            android:layout_marginHorizontal="6dp"
+            android:text="•" />
+
+        <TextView
+            android:id="@+id/exam_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/widget_on_surface_variant"
+            android:textSize="11sp"
+            android:text="09:00" />
+
+    </LinearLayout>
+
+    <!-- Empty state -->
+    <TextView
+        android:id="@+id/empty_message"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="14sp"
+        android:visibility="gone"
+        android:text="No exams 🎉" />
+
+</LinearLayout>

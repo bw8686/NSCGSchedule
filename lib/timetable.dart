@@ -18,7 +18,14 @@ const bool kInsertRoomNumbers = bool.fromEnvironment(
 );
 
 class TimetableScreen extends StatefulWidget {
-  const TimetableScreen({super.key});
+  final String? initialDay;
+  final int? highlightLessonIndex;
+
+  const TimetableScreen({
+    super.key,
+    this.initialDay,
+    this.highlightLessonIndex,
+  });
 
   @override
   State<TimetableScreen> createState() => _TimetableScreenState();
@@ -44,6 +51,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
   StreamSubscription<bool>? _updateSub;
   StreamSubscription<bool>? _loggedinSub;
   StreamSubscription<void>? _notificationResub;
+  int? _highlightLessonIndex;
+  Timer? _highlightTimer;
 
   @override
   void initState() {
@@ -51,6 +60,20 @@ class _TimetableScreenState extends State<TimetableScreen> {
     _loadTimetable();
     init();
     _startTimer();
+
+    // Handle deep link highlight
+    if (widget.highlightLessonIndex != null) {
+      _highlightLessonIndex = widget.highlightLessonIndex;
+      // Clear highlight after 3 seconds
+      _highlightTimer = Timer(const Duration(seconds: 3), () {
+        if (mounted) {
+          setState(() {
+            _highlightLessonIndex = null;
+          });
+        }
+      });
+    }
+
     // Listen for notification settings changes to reschedule notifications
     _resub = settings.onNotificationSettingsChanged.listen((_) {
       _scheduleNotifications();
@@ -92,6 +115,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
   void dispose() {
     _timer?.cancel();
     _timer?.cancel();
+    _highlightTimer?.cancel();
     _resub?.cancel();
     _debugSub?.cancel();
     _updateSub?.cancel();
@@ -571,28 +595,43 @@ class _TimetableScreenState extends State<TimetableScreen> {
     int initialIndex = 0;
     bool found = false;
 
-    // Try to find today or the next available day
-    for (int i = 0; i < 7; i++) {
-      final checkWeekday =
-          (currentWeekday - 1 + i) % 7; // Start from today, go forward
-      final dayName = weekdayNames[checkWeekday];
-
-      // Find the first matching day in our timetable
+    // If we have an initialDay from deep link, use that
+    if (widget.initialDay != null) {
       for (int j = 0; j < _timetable!.days.length; j++) {
         if (_timetable!.days[j].day.toLowerCase().contains(
-          dayName.toLowerCase(),
+          widget.initialDay!.toLowerCase(),
         )) {
           initialIndex = j;
           found = true;
           break;
         }
       }
+    }
 
-      if (found) break;
+    // If no initial day specified or not found, try to find today or the next available day
+    if (!found) {
+      for (int i = 0; i < 7; i++) {
+        final checkWeekday =
+            (currentWeekday - 1 + i) % 7; // Start from today, go forward
+        final dayName = weekdayNames[checkWeekday];
 
-      // If we've checked all days of the week, just use the first day
-      if (i == 6) {
-        initialIndex = 0;
+        // Find the first matching day in our timetable
+        for (int j = 0; j < _timetable!.days.length; j++) {
+          if (_timetable!.days[j].day.toLowerCase().contains(
+            dayName.toLowerCase(),
+          )) {
+            initialIndex = j;
+            found = true;
+            break;
+          }
+        }
+
+        if (found) break;
+
+        // If we've checked all days of the week, just use the first day
+        if (i == 6) {
+          initialIndex = 0;
+        }
       }
     }
 
@@ -624,6 +663,14 @@ class _TimetableScreenState extends State<TimetableScreen> {
           Expanded(
             child: TabBarView(
               children: _timetable!.days.map((day) {
+                final dayIndex = _timetable!.days.indexOf(day);
+                // Only show highlight on the initial day (or current day if using deep link)
+                final isTargetDay = widget.initialDay != null
+                    ? day.day.toLowerCase().contains(
+                        widget.initialDay!.toLowerCase(),
+                      )
+                    : dayIndex == initialIndex;
+
                 return RefreshIndicator(
                   onRefresh: () async {
                     await _reloadTimetable();
@@ -633,38 +680,96 @@ class _TimetableScreenState extends State<TimetableScreen> {
                     itemCount: day.lessons.length,
                     itemBuilder: (context, index) {
                       final lesson = day.lessons[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                          vertical: 4,
-                          horizontal: 8,
-                        ),
-                        child: ListTile(
-                          title: Text(
-                            lesson.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                      final isHighlighted =
+                          isTargetDay && _highlightLessonIndex == index;
+
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        decoration: isHighlighted
+                            ? BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(context).colorScheme.primary
+                                        .withValues(alpha: 0.4),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              )
+                            : null,
+                        child: Card(
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 4,
+                            horizontal: 8,
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${lesson.startTime} - ${lesson.endTime}${_nextLessonId == '${lesson.name}-${lesson.startTime}' ? _timeRemaining : ''}',
-                              ),
-                              Text('Room: ${lesson.room}'),
-                              Text('Teachers: ${lesson.teachers.join(", ")}'),
-                              Text(
-                                'Course: ${lesson.course} (${lesson.group})',
-                              ),
-                            ],
-                          ),
-                          isThreeLine: true,
-                          onTap: kInsertRoomNumbers
-                              ? () {
-                                  final dayIndex = _timetable!.days.indexOf(
-                                    day,
-                                  );
-                                  _editRoom(dayIndex, index);
-                                }
+                          color: isHighlighted
+                              ? Theme.of(context).colorScheme.primaryContainer
                               : null,
+                          child: ListTile(
+                            title: Text(
+                              lesson.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isHighlighted
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.onPrimaryContainer
+                                    : null,
+                              ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${lesson.startTime} - ${lesson.endTime}${_nextLessonId == '${lesson.name}-${lesson.startTime}' ? _timeRemaining : ''}',
+                                  style: isHighlighted
+                                      ? TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimaryContainer,
+                                        )
+                                      : null,
+                                ),
+                                Text(
+                                  'Room: ${lesson.room}',
+                                  style: isHighlighted
+                                      ? TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimaryContainer,
+                                        )
+                                      : null,
+                                ),
+                                Text(
+                                  'Teachers: ${lesson.teachers.join(", ")}',
+                                  style: isHighlighted
+                                      ? TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimaryContainer,
+                                        )
+                                      : null,
+                                ),
+                                Text(
+                                  'Course: ${lesson.course} (${lesson.group})',
+                                  style: isHighlighted
+                                      ? TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimaryContainer,
+                                        )
+                                      : null,
+                                ),
+                              ],
+                            ),
+                            isThreeLine: true,
+                            onTap: kInsertRoomNumbers
+                                ? () {
+                                    _editRoom(dayIndex, index);
+                                  }
+                                : null,
+                          ),
                         ),
                       );
                     },

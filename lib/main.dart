@@ -47,6 +47,7 @@ Future<void> _initServices() async {
 
   // Debug service (centralized debug time)
   final debugService = DebugService.instance;
+  await debugService.loadFromPrefs();
   getIt.registerSingleton<DebugService>(debugService);
 
   // Friends Service (will work after adapters are registered)

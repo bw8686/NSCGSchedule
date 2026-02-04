@@ -7,6 +7,7 @@ import 'package:nscgschedule/models/timetable_models.dart';
 import 'package:nscgschedule/models/exam_models.dart';
 import 'package:nscgschedule/settings.dart';
 import 'package:nscgschedule/watch_service.dart';
+import 'package:nscgschedule/widget_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:nscgschedule/updater.dart';
 
@@ -131,6 +132,8 @@ class NSCGRequests {
           await WatchService.instance.syncTimetable();
           await WatchService.instance.updateContext();
         }
+        // Sync to home screen widgets
+        await WidgetService.instance.syncTimetableToWidget();
         return timetable;
       } else {
         settings.setBool('loggedin', false);
@@ -187,6 +190,8 @@ class NSCGRequests {
           await WatchService.instance.syncExamTimetable();
           await WatchService.instance.updateContext();
         }
+        // Sync to home screen widgets
+        await WidgetService.instance.syncExamTimetableToWidget();
         return examTimetable;
       } else {
         settings.setBool('loggedin', false);

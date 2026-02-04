@@ -37,7 +37,7 @@ class Friend {
   @HiveField(5)
   final String? profilePicPath; // Optional local profile picture path (not shared)
   @HiveField(6)
-  final String? userId; // Optional stable user identifier (e.g. C243879)
+  final String? userId; // Optional stable user identifier (e.g. C123456)
 
   Friend({
     required this.id,

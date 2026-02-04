@@ -42,7 +42,15 @@ final GoRouter routerController = GoRouter(
         GoRoute(
           path: '/Timetable',
           builder: (BuildContext context, GoRouterState state) {
-            return TimetableScreen();
+            final day = state.uri.queryParameters['day'];
+            final lessonStr = state.uri.queryParameters['lesson'];
+            final lessonIndex = lessonStr != null
+                ? int.tryParse(lessonStr)
+                : null;
+            return TimetableScreen(
+              initialDay: day,
+              highlightLessonIndex: lessonIndex,
+            );
           },
         ),
         GoRoute(
@@ -194,10 +202,18 @@ class _MainShellState extends State<MainShell> {
                 icon: Icon(Icons.calendar_today),
                 label: 'Timetable',
               ),
-              const NavigationDestination(icon: Icon(Icons.school), label: 'Exams'),
-              const NavigationDestination(icon: Icon(Icons.people), label: 'Friends'),
+              const NavigationDestination(
+                icon: Icon(Icons.school),
+                label: 'Exams',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.people),
+                label: 'Friends',
+              ),
               NavigationDestination(
-                icon: _hasUpdate ? const Icon(Icons.settings_suggest) : const Icon(Icons.settings),
+                icon: _hasUpdate
+                    ? const Icon(Icons.settings_suggest)
+                    : const Icon(Icons.settings),
                 label: 'Settings',
               ),
             ],

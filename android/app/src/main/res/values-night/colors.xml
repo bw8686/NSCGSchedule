@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material You Widget Colors - Dark Theme -->
+    <!-- Primary colors -->
+    <color name="widget_primary">#D0BCFF</color>
+    <color name="widget_on_primary">#381E72</color>
+    <color name="widget_primary_container">#4F378B</color>
+    <color name="widget_on_primary_container">#EADDFF</color>
+    
+    <!-- Secondary colors -->
+    <color name="widget_secondary">#CCC2DC</color>
+    <color name="widget_on_secondary">#332D41</color>
+    <color name="widget_secondary_container">#4A4458</color>
+    <color name="widget_on_secondary_container">#E8DEF8</color>
+    
+    <!-- Tertiary colors -->
+    <color name="widget_tertiary">#EFB8C8</color>
+    <color name="widget_on_tertiary">#492532</color>
+    <color name="widget_tertiary_container">#633B48</color>
+    <color name="widget_on_tertiary_container">#FFD8E4</color>
+    
+    <!-- Error colors -->
+    <color name="widget_error">#F2B8B5</color>
+    <color name="widget_on_error">#601410</color>
+    <color name="widget_error_container">#8C1D18</color>
+    <color name="widget_on_error_container">#F9DEDC</color>
+    
+    <!-- Surface colors -->
+    <color name="widget_surface">#1C1B1F</color>
+    <color name="widget_surface_variant">#49454F</color>
+    <color name="widget_on_surface">#E6E1E5</color>
+    <color name="widget_on_surface_variant">#CAC4D0</color>
+    <color name="widget_surface_container">#211F26</color>
+    <color name="widget_surface_container_lowest">#0F0D13</color>
+    
+    <!-- Other colors -->
+    <color name="widget_outline">#938F99</color>
+    <color name="widget_outline_variant">#49454F</color>
+    <color name="widget_divider">#3D3D3D</color>
+</resources>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- STYLE 14: Unified Mini Widget (2x1) - Vertical stacked badges -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="8dp"
+    android:orientation="vertical"
+    android:gravity="center_vertical"
+    android:background="@drawable/widget_background_rounded">
+
+    <!-- Lesson badge -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="4dp"
+        android:orientation="horizontal"
+        android:background="@drawable/widget_section_primary"
+        android:paddingVertical="6dp"
+        android:paddingHorizontal="8dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/widget_primary"
+            android:textSize="12sp"
+            android:text="📚" />
+
+        <TextView
+            android:id="@+id/lesson_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:textColor="@color/widget_on_surface"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="Math 9:00" />
+
+    </LinearLayout>
+
+    <!-- Exam badge -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal"
+        android:background="@drawable/widget_section_error"
+        android:paddingVertical="6dp"
+        android:paddingHorizontal="8dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/widget_error"
+            android:textSize="12sp"
+            android:text="📝" />
+
+        <TextView
+            android:id="@+id/exam_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:textColor="@color/widget_on_surface"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="Phys 3d" />
+
+    </LinearLayout>
+
+</LinearLayout>

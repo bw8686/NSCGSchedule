@@ -1,0 +1,661 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- STYLE 4: Today's Schedule Detailed Widget - up to 8 items, scales with size -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="12dp"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background_rounded">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="6dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:layout_marginEnd="6dp"
+            android:text="📚" />
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/widget_on_surface"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:text="Today's Lessons" />
+
+        <TextView
+            android:id="@+id/lesson_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/widget_badge_secondary"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:textColor="@color/widget_on_secondary"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:text="8" />
+
+    </LinearLayout>
+
+    <!-- Lessons container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Lesson 1 -->
+        <LinearLayout
+            android:id="@+id/lesson1_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_primary"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/lesson1_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="Mathematics" />
+
+                <TextView
+                    android:id="@+id/lesson1_teacher"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Dr. Smith" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/lesson1_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:layout_marginEnd="6dp"
+                android:text="09:00" />
+
+            <TextView
+                android:id="@+id/lesson1_room"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/widget_badge_primary"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:textColor="@color/widget_on_primary"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:text="A101" />
+
+        </LinearLayout>
+
+        <!-- Lesson 2 -->
+        <LinearLayout
+            android:id="@+id/lesson2_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true">
+            android:paddingEnd="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_secondary"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/lesson2_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="Physics" />
+
+                <TextView
+                    android:id="@+id/lesson2_teacher"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Prof. Jones" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/lesson2_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:layout_marginEnd="6dp"
+                android:text="10:45" />
+
+            <TextView
+                android:id="@+id/lesson2_room"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/widget_badge_secondary"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:textColor="@color/widget_on_secondary"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:text="B202" />
+
+        </LinearLayout>
+
+        <!-- Lesson 3 -->
+        <LinearLayout
+            android:id="@+id/lesson3_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_tertiary"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/lesson3_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="Chemistry" />
+
+                <TextView
+                    android:id="@+id/lesson3_teacher"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Mrs. Brown" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/lesson3_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:layout_marginEnd="6dp"
+                android:text="13:00" />
+
+            <TextView
+                android:id="@+id/lesson3_room"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/widget_badge_primary"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:textColor="@color/widget_on_primary"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:text="C303" />
+
+        </LinearLayout>
+
+        <!-- Lesson 4 -->
+        <LinearLayout
+            android:id="@+id/lesson4_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_outline"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/lesson4_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="English" />
+
+                <TextView
+                    android:id="@+id/lesson4_teacher"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Mr. Davis" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/lesson4_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:layout_marginEnd="6dp"
+                android:text="14:45" />
+
+            <TextView
+                android:id="@+id/lesson4_room"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/widget_badge_secondary"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:textColor="@color/widget_on_secondary"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:text="D404" />
+
+        </LinearLayout>
+
+        <!-- Lesson 5 -->
+        <LinearLayout
+            android:id="@+id/lesson5_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_primary"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/lesson5_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="History" />
+
+                <TextView
+                    android:id="@+id/lesson5_teacher"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Ms. Wilson" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/lesson5_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:layout_marginEnd="6dp"
+                android:text="15:30" />
+
+            <TextView
+                android:id="@+id/lesson5_room"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/widget_badge_primary"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:textColor="@color/widget_on_primary"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:text="E505" />
+
+        </LinearLayout>
+
+        <!-- Lesson 6 -->
+        <LinearLayout
+            android:id="@+id/lesson6_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_secondary"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/lesson6_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="Art" />
+
+                <TextView
+                    android:id="@+id/lesson6_teacher"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Mr. Garcia" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/lesson6_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:layout_marginEnd="6dp"
+                android:text="16:15" />
+
+            <TextView
+                android:id="@+id/lesson6_room"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/widget_badge_secondary"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:textColor="@color/widget_on_secondary"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:text="F606" />
+
+        </LinearLayout>
+
+        <!-- Lesson 7 -->
+        <LinearLayout
+            android:id="@+id/lesson7_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="2dp"
+            android:clickable="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_tertiary"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/lesson7_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="Music" />
+
+                <TextView
+                    android:id="@+id/lesson7_teacher"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Mrs. Lee" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/lesson7_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:layout_marginEnd="6dp"
+                android:text="17:00" />
+
+            <TextView
+                android:id="@+id/lesson7_room"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/widget_badge_primary"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:textColor="@color/widget_on_primary"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:text="G707" />
+
+        </LinearLayout>
+
+        <!-- Lesson 8 -->
+        <LinearLayout
+            android:id="@+id/lesson8_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_item_background"
+            android:paddingHorizontal="8dp"
+            android:clickable="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="8dp"
+                android:layout_marginVertical="6dp"
+                android:background="@drawable/widget_indicator_outline"
+                android:contentDescription="" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/lesson8_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:text="PE" />
+
+                <TextView
+                    android:id="@+id/lesson8_teacher"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/widget_on_surface_variant"
+                    android:textSize="10sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="Mr. Taylor" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/lesson8_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:layout_marginEnd="6dp"
+                android:text="17:45" />
+
+            <TextView
+                android:id="@+id/lesson8_room"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/widget_badge_secondary"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:textColor="@color/widget_on_secondary"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:text="GYM" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Empty message -->
+    <TextView
+        android:id="@+id/empty_message"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="13sp"
+        android:visibility="gone"
+        android:text="🎉\n\nNo more lessons\ntoday" />
+
+</LinearLayout>

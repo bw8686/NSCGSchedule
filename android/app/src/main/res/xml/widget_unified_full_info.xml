@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- STYLE 12: Unified Full (3x3) -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="180dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="3"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="180dp"
+    android:maxResizeWidth="400dp"
+    android:maxResizeHeight="180dp"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_unified_full"
+    android:resizeMode="horizontal"
+    android:widgetCategory="home_screen"
+    android:previewLayout="@layout/widget_unified_full"
+    android:description="@string/widget_unified_full_desc" />

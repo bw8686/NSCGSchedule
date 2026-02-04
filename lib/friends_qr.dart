@@ -50,6 +50,23 @@ class _ShareQRScreenState extends State<ShareQRScreen> {
     } else {
       _nameController.text = 'My Schedule';
     }
+
+    // Load saved privacy level
+    final savedPrivacy = await _settings.getKey('qrPrivacyLevel');
+    if (savedPrivacy.isNotEmpty) {
+      switch (savedPrivacy) {
+        case 'freeTimeOnly':
+          _selectedPrivacy = PrivacyLevel.freeTimeOnly;
+          break;
+        case 'busyBlocks':
+          _selectedPrivacy = PrivacyLevel.busyBlocks;
+          break;
+        case 'fullDetails':
+          _selectedPrivacy = PrivacyLevel.fullDetails;
+          break;
+      }
+    }
+
     await _generateQR(forceLoading: true);
   }
 
@@ -270,9 +287,21 @@ class _ShareQRScreenState extends State<ShareQRScreen> {
                           const SizedBox(height: 12),
                           RadioGroup<PrivacyLevel>(
                             groupValue: _selectedPrivacy,
-                            onChanged: (PrivacyLevel? v) {
+                            onChanged: (PrivacyLevel? v) async {
                               if (v == null) return;
                               setState(() => _selectedPrivacy = v);
+
+                              // Save privacy level preference
+                              final privacyStr = v == PrivacyLevel.freeTimeOnly
+                                  ? 'freeTimeOnly'
+                                  : v == PrivacyLevel.busyBlocks
+                                  ? 'busyBlocks'
+                                  : 'fullDetails';
+                              await _settings.setKey(
+                                'qrPrivacyLevel',
+                                privacyStr,
+                              );
+
                               _generateQR();
                             },
                             child: Column(

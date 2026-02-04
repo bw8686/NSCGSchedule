@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Lesson Widget Descriptions -->
+    <string name="widget_next_lesson_compact_desc">Compact view showing your next lesson with time and room</string>
+    <string name="widget_next_lesson_card_desc">Card showing next lesson with course, time, room and teacher details</string>
+    <string name="widget_today_schedule_desc">List of today\'s lessons at a glance</string>
+    <string name="widget_today_schedule_detailed_desc">Detailed list of today\'s lessons with room and teacher info</string>
+    
+    <!-- Exam Widget Descriptions -->
+    <string name="widget_next_exam_compact_desc">Compact countdown to your next exam</string>
+    <string name="widget_next_exam_card_desc">Card showing next exam with date, time, room and seat</string>
+    <string name="widget_exam_list_desc">List of upcoming exams with countdown</string>
+    <string name="widget_exam_countdown_desc">Big countdown display to your next exam</string>
+    <string name="widget_exam_details_desc">Detailed exam schedule with room and seat information</string>
+    
+    <!-- Unified Widget Descriptions -->
+    <string name="widget_unified_compact_desc">Compact view showing both next lesson and next exam</string>
+    <string name="widget_unified_card_desc">Side-by-side view of today\'s lessons and upcoming exams</string>
+    <string name="widget_unified_full_desc">Complete overview with multiple lessons and exams</string>
+    <string name="widget_unified_stacked_desc">Vertical layout with next lesson on top, next exam below</string>
+    <string name="widget_unified_mini_desc">Ultra-compact single line for lesson and exam</string>
+    
+    <!-- Widget Labels -->
+    <string name="widget_lesson_label_compact">Next Lesson</string>
+    <string name="widget_lesson_label_card">Lesson Card</string>
+    <string name="widget_lesson_label_schedule">Today\'s Schedule</string>
+    <string name="widget_lesson_label_detailed">Detailed Schedule</string>
+    <string name="widget_exam_label_compact">Next Exam</string>
+    <string name="widget_exam_label_card">Exam Card</string>
+    <string name="widget_exam_label_list">Exam List</string>
+    <string name="widget_exam_label_countdown">Exam Countdown</string>
+    <string name="widget_exam_label_details">Exam Details</string>
+    <string name="widget_unified_label_compact">Schedule Compact</string>
+    <string name="widget_unified_label_card">Schedule Card</string>
+    <string name="widget_unified_label_full">Full Schedule</string>
+    <string name="widget_unified_label_stacked">Schedule Stacked</string>
+    <string name="widget_unified_label_mini">Schedule Mini</string>
+</resources>

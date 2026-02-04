@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- STYLE 12: Unified Full Widget (4x3) - Complete overview -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp"
+    android:orientation="horizontal"
+    android:background="@drawable/widget_background_rounded">
+
+    <!-- Lessons column -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="@drawable/widget_section_primary"
+        android:padding="10dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_primary"
+                android:textSize="14sp"
+                android:text="📚" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:textColor="@color/widget_primary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:text="Today" />
+
+        </LinearLayout>
+
+        <!-- Lesson 1 -->
+        <LinearLayout
+            android:id="@+id/lesson1_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/widget_item_background"
+            android:padding="6dp"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:id="@+id/lesson1_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="Mathematics" />
+
+            <TextView
+                android:id="@+id/lesson1_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:text="09:00 • A101" />
+
+        </LinearLayout>
+
+        <!-- Lesson 2 -->
+        <LinearLayout
+            android:id="@+id/lesson2_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/widget_item_background"
+            android:padding="6dp"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:id="@+id/lesson2_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="Physics" />
+
+            <TextView
+                android:id="@+id/lesson2_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:text="10:45 • B202" />
+
+        </LinearLayout>
+
+        <!-- Lesson 3 -->
+        <LinearLayout
+            android:id="@+id/lesson3_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/widget_item_background"
+            android:padding="6dp">
+
+            <TextView
+                android:id="@+id/lesson3_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="Chemistry" />
+
+            <TextView
+                android:id="@+id/lesson3_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:text="13:00 • C303" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/lessons_empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textColor="@color/widget_on_surface_variant"
+            android:textSize="12sp"
+            android:visibility="gone"
+            android:text="🎉\nNo more lessons\ntoday" />
+
+    </LinearLayout>
+
+    <!-- Spacer between columns -->
+    <TextView
+        android:layout_width="8dp"
+        android:layout_height="match_parent"
+        android:text="" />
+
+    <!-- Exams column -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="@drawable/widget_section_error"
+        android:padding="10dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_error"
+                android:textSize="14sp"
+                android:text="📝" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:textColor="@color/widget_error"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:text="Exams" />
+
+        </LinearLayout>
+
+        <!-- Exam 1 -->
+        <LinearLayout
+            android:id="@+id/exam1_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/widget_item_background_accent"
+            android:padding="6dp"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:id="@+id/exam1_subject"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:text="Mathematics" />
+
+            <TextView
+                android:id="@+id/exam1_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_error"
+                android:textSize="10sp"
+                android:text="3 days • 09:00" />
+
+        </LinearLayout>
+
+        <!-- Exam 2 -->
+        <LinearLayout
+            android:id="@+id/exam2_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/widget_item_background_accent"
+            android:padding="6dp"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:id="@+id/exam2_subject"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:text="Physics" />
+
+            <TextView
+                android:id="@+id/exam2_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:text="5 days • 14:00" />
+
+        </LinearLayout>
+
+        <!-- Exam 3 -->
+        <LinearLayout
+            android:id="@+id/exam3_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/widget_item_background_accent"
+            android:padding="6dp">
+
+            <TextView
+                android:id="@+id/exam3_subject"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:text="Chemistry" />
+
+            <TextView
+                android:id="@+id/exam3_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="10sp"
+                android:text="May 20 • 10:00" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/exams_empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textColor="@color/widget_on_surface_variant"
+            android:textSize="12sp"
+            android:visibility="gone"
+            android:text="No exams 🎉" />
+
+    </LinearLayout>
+
+</LinearLayout>

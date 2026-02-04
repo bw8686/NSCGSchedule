@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- STYLE 9: Exam Details (4x3) -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="180dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="3"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="180dp"
+    android:maxResizeWidth="400dp"
+    android:maxResizeHeight="300dp"
+    android:updatePeriodMillis="3600000"
+    android:initialLayout="@layout/widget_exam_details"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:previewLayout="@layout/widget_exam_details"
+    android:description="@string/widget_exam_details_desc" />

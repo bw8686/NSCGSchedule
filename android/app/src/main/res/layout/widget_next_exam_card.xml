@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- STYLE 6: Next Exam Card Widget (2x2) - Detailed exam card -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="12dp"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background_rounded_accent">
+
+    <!-- Header row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/widget_badge_error"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:textColor="@color/widget_on_error"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:text="EXAM" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="" />
+
+        <TextView
+            android:id="@+id/days_until"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/widget_error"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:text="In 3 days" />
+
+    </LinearLayout>
+
+    <!-- Subject name -->
+    <TextView
+        android:id="@+id/exam_subject"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/widget_on_surface"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:text="Mathematics" />
+
+    <!-- Paper code -->
+    <TextView
+        android:id="@+id/exam_paper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="11sp"
+        android:maxLines="1"
+        android:text="Paper 1" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="" />
+
+    <!-- Date and time -->
+    <TextView
+        android:id="@+id/exam_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/widget_on_surface"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:text="Wed, May 15" />
+
+    <TextView
+        android:id="@+id/exam_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="11sp"
+        android:text="09:00 - 11:00" />
+
+    <!-- Room and seat -->
+    <TextView
+        android:id="@+id/exam_room"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="11sp"
+        android:text="Room: Hall A" />
+
+    <TextView
+        android:id="@+id/exam_seat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="11sp"
+        android:text="Seat: 42" />
+
+    <!-- Empty state -->
+    <TextView
+        android:id="@+id/empty_message"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="14sp"
+        android:visibility="gone"
+        android:text="No upcoming exams 🎉" />
+
+</LinearLayout>
