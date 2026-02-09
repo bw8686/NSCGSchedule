@@ -71,7 +71,16 @@ object WidgetDataHelper {
     
     fun getTimetable(context: Context): List<DaySchedule> {
         val prefs = getPrefs(context)
-        val timetableJson = prefs.getString("flutter.timetable", null) ?: return emptyList()
+        android.util.Log.d("WidgetDataHelper", "getTimetable: Looking for key 'flutter.timetable'")
+        
+        // Log all keys in SharedPreferences for debugging
+        val allKeys = prefs.all.keys
+        android.util.Log.d("WidgetDataHelper", "getTimetable: Available keys (${allKeys.size}): ${allKeys.joinToString(", ")}")
+        
+        val timetableJson = prefs.getString("flutter.timetable", null)
+        android.util.Log.d("WidgetDataHelper", "getTimetable: json=${if (timetableJson == null) "null" else "length ${timetableJson.length}"}") 
+        
+        if (timetableJson == null) return emptyList()
         
         return try {
             val json = JSONObject(timetableJson)
@@ -114,7 +123,12 @@ object WidgetDataHelper {
     
     fun getExams(context: Context): List<ExamData> {
         val prefs = getPrefs(context)
-        val examJson = prefs.getString("flutter.examTimetable", null) ?: return emptyList()
+        android.util.Log.d("WidgetDataHelper", "getExams: Looking for key 'flutter.examTimetable'")
+        
+        val examJson = prefs.getString("flutter.examTimetable", null)
+        android.util.Log.d("WidgetDataHelper", "getExams: json=${if (examJson == null) "null" else "length ${examJson.length}"}") 
+        
+        if (examJson == null) return emptyList()
         
         return try {
             val json = JSONObject(examJson)
@@ -162,21 +176,30 @@ object WidgetDataHelper {
     fun hasTimetable(context: Context): Boolean {
         val prefs = getPrefs(context)
         val timetableJson = prefs.getString("flutter.timetable", null)
-        return !timetableJson.isNullOrEmpty() && getTimetable(context).isNotEmpty()
+        val timetable = getTimetable(context)
+        val result = !timetableJson.isNullOrEmpty() && timetable.isNotEmpty()
+        android.util.Log.d("WidgetDataHelper", "hasTimetable: json=${timetableJson?.take(100)}, timetableSize=${timetable.size}, result=$result")
+        return result
     }
     
     /**
      * Check if user has any exams set up at all
      */
     fun hasExams(context: Context): Boolean {
-        return getExams(context).isNotEmpty()
+        val exams = getExams(context)
+        val result = exams.isNotEmpty()
+        android.util.Log.d("WidgetDataHelper", "hasExams: examsSize=${exams.size}, result=$result")
+        return result
     }
     
     /**
      * Check if there are any lessons scheduled for today
      */
     fun hasLessonsToday(context: Context): Boolean {
-        return getTodayLessons(context).isNotEmpty()
+        val lessons = getTodayLessons(context)
+        val result = lessons.isNotEmpty()
+        android.util.Log.d("WidgetDataHelper", "hasLessonsToday: lessonsSize=${lessons.size}, result=$result")
+        return result
     }
     
     /**
@@ -187,9 +210,11 @@ object WidgetDataHelper {
         val now = getCurrentTime(context)
         val currentMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
         
-        return lessons.any { lesson ->
+        val result = lessons.any { lesson ->
             parseTimeToMinutes(lesson.endTime) > currentMinutes
         }
+        android.util.Log.d("WidgetDataHelper", "hasRemainingLessonsToday: lessonsSize=${lessons.size}, currentMinutes=$currentMinutes, result=$result")
+        return result
     }
     
     /**
@@ -424,6 +449,8 @@ object WidgetDataHelper {
         val merged = getTodayMergedSchedule(context)
         val now = getCurrentTime(context)
         val currentMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+        
+        android.util.Log.d("WidgetDataHelper", "getUpcomingMergedScheduleToday: mergedSize=${merged.size}, currentMinutes=$currentMinutes, limit=$limit")
         
         return merged.filter { item ->
             val endMinutes = when (item) {

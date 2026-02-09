@@ -321,9 +321,12 @@ class TodayScheduleDetailedWidget : AppWidgetProvider() {
             
             if (scheduleItems.isEmpty()) {
                 views.setViewVisibility(R.id.empty_message, android.view.View.VISIBLE)
+                val hasTimetable = WidgetDataHelper.hasTimetable(context)
+                val hasLessonsToday = WidgetDataHelper.hasLessonsToday(context)
+                android.util.Log.d("TodayScheduleDetailedWidget", "Empty state: hasTimetable=$hasTimetable, hasLessonsToday=$hasLessonsToday")
                 val emptyMessage = when {
-                    !WidgetDataHelper.hasTimetable(context) -> "⚙️ No timetable set up\nTap to get started"
-                    !WidgetDataHelper.hasLessonsToday(context) -> if (WidgetDataHelper.isWeekend(context)) "🎉 Weekend! No lessons" else "🎉 No lessons today\nFree day!"
+                    !hasTimetable -> "⚙️ No timetable set up\nTap to get started"
+                    !hasLessonsToday -> if (WidgetDataHelper.isWeekend(context)) "🎉 Weekend! No lessons" else "🎉 No lessons today\nFree day!"
                     else -> "✓ All done for today\nNo more lessons remaining"
                 }
                 views.setTextViewText(R.id.empty_message, emptyMessage)

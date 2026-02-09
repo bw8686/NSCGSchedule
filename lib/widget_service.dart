@@ -19,7 +19,7 @@ class WidgetService {
       final timetableData = await settings.getMap('timetable');
 
       if (timetableData.isNotEmpty) {
-        await prefs.setString('flutter.timetable', jsonEncode(timetableData));
+        await prefs.setString('timetable', jsonEncode(timetableData));
         // Trigger widget update on Android
         if (Platform.isAndroid) {
           await _updateLessonWidgets();
@@ -39,7 +39,7 @@ class WidgetService {
       final examData = await settings.getMap('examTimetable');
 
       if (examData.isNotEmpty) {
-        await prefs.setString('flutter.examTimetable', jsonEncode(examData));
+        await prefs.setString('examTimetable', jsonEncode(examData));
         // Trigger widget update on Android
         if (Platform.isAndroid) {
           await _updateExamWidgets();
@@ -62,8 +62,8 @@ class WidgetService {
   Future<void> clearWidgetData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('flutter.timetable');
-      await prefs.remove('flutter.examTimetable');
+      await prefs.remove('timetable');
+      await prefs.remove('examTimetable');
       // Update widgets to show empty state
       if (Platform.isAndroid) {
         await updateAllWidgets();

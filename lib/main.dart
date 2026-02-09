@@ -5,6 +5,7 @@ import 'package:nscgschedule/models/friend_models.dart';
 import 'package:nscgschedule/router.dart';
 import 'package:nscgschedule/settings.dart';
 import 'package:nscgschedule/watch_service.dart';
+import 'package:nscgschedule/widget_service.dart';
 import 'package:nscgschedule/friends_service.dart';
 import 'package:nscgschedule/debug_service.dart';
 import 'dart:async';
@@ -94,6 +95,9 @@ Future<void> _initServices() async {
 
   // Watch Service for WearOS communication
   await WatchService.instance.init();
+
+  // Initialize widget service and sync existing data
+  await WidgetService.instance.syncAllToWidget();
 
   // Initialize badges system (will load cached data; optionally provide remote URL)
   try {

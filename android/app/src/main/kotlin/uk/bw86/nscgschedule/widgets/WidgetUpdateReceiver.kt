@@ -28,18 +28,25 @@ class WidgetUpdateReceiver : BroadcastReceiver() {
         when (intent.action) {
             ACTION_UPDATE_WIDGETS -> {
                 updateAllWidgets(context, appWidgetManager)
+                // Reschedule for next day's midnight
+                WidgetUpdateScheduler.scheduleWidgetUpdates(context)
             }
             ACTION_UPDATE_LESSON_WIDGETS -> {
                 updateLessonWidgets(context, appWidgetManager)
+                // Reschedule lesson updates (they're one-time alarms now)
+                WidgetUpdateScheduler.scheduleWidgetUpdates(context)
             }
             ACTION_UPDATE_EXAM_WIDGETS -> {
                 updateExamWidgets(context, appWidgetManager)
+                // Reschedule exam updates (they're one-time alarms now)
+                WidgetUpdateScheduler.scheduleWidgetUpdates(context)
             }
             Intent.ACTION_TIME_CHANGED,
             Intent.ACTION_TIMEZONE_CHANGED,
             Intent.ACTION_DATE_CHANGED -> {
-                // System time changed, update all widgets
+                // System time changed, update all widgets and reschedule
                 updateAllWidgets(context, appWidgetManager)
+                WidgetUpdateScheduler.scheduleWidgetUpdates(context)
             }
         }
     }

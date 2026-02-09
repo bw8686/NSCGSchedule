@@ -65,17 +65,18 @@ class WatchService {
 
   /// Update the watch with new timetable data
   /// Call this when the timetable is updated
-  Future<void> syncTimetable() async {
+  ///
+  /// When [forceRefresh] is true, will attempt to fetch fresh data from server
+  /// even if not logged in (useful for watch-initiated refresh requests)
+  Future<void> syncTimetable({bool forceRefresh = false}) async {
     try {
-      // If the user is logged in on mobile, attempt to fetch a fresh
-      // timetable from the server before sending. If the fetch fails or
-      // the user is not logged in, fall back to the stored timetable.
       final loggedin = await settings.getBool('loggedin');
 
       Map<String, dynamic> timetableData = {};
       String? timetableUpdated;
 
-      if (loggedin) {
+      // Always attempt to fetch if logged in, or if force refresh is requested
+      if (loggedin || forceRefresh) {
         try {
           final fetched = await NSCGRequests.instance.getTimeTable(
             notifyWatch: false,
@@ -86,6 +87,7 @@ class WatchService {
           }
         } catch (e) {
           // ignore and fall back to stored data
+          debugPrint('WatchService: Failed to fetch fresh timetable - $e');
         }
       }
 
@@ -109,16 +111,18 @@ class WatchService {
 
   /// Update the watch with new exam timetable data
   /// Call this when the exam timetable is updated
-  Future<void> syncExamTimetable() async {
+  ///
+  /// When [forceRefresh] is true, will attempt to fetch fresh data from server
+  /// even if not logged in (useful for watch-initiated refresh requests)
+  Future<void> syncExamTimetable({bool forceRefresh = false}) async {
     try {
-      // Try to fetch a fresh exam timetable when the mobile app is logged in,
-      // otherwise fall back to the stored exam timetable.
       final loggedin = await settings.getBool('loggedin');
 
       Map<String, dynamic> examData = {};
       String? examUpdated;
 
-      if (loggedin) {
+      // Always attempt to fetch if logged in, or if force refresh is requested
+      if (loggedin || forceRefresh) {
         try {
           final fetched = await NSCGRequests.instance.getExamTimetable(
             notifyWatch: false,
@@ -129,6 +133,7 @@ class WatchService {
           }
         } catch (e) {
           // ignore and fall back to stored data
+          debugPrint('WatchService: Failed to fetch fresh exam timetable - $e');
         }
       }
 

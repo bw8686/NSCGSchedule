@@ -288,14 +288,23 @@ class WidgetUpdateScheduler {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
-            alarmManager.setRepeating(
-                AlarmManager.RTC_WAKEUP,
-                midnight.timeInMillis,
-                AlarmManager.INTERVAL_DAY,
-                pendingIntent
-            )
-            
-            Log.d(TAG, "Scheduled daily midnight update")
+            // Use setExactAndAllowWhileIdle for reliable updates even in Doze mode
+            try {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    midnight.timeInMillis,
+                    pendingIntent
+                )
+                Log.d(TAG, "Scheduled daily midnight update using setExactAndAllowWhileIdle")
+            } catch (e: SecurityException) {
+                // Fall back to setExact if exact alarm permission is denied
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    midnight.timeInMillis,
+                    pendingIntent
+                )
+                Log.d(TAG, "Scheduled daily midnight update using setExact (fallback)")
+            }
         }
         
         private fun scheduleWeeklyAlarm(
@@ -345,15 +354,23 @@ class WidgetUpdateScheduler {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
                 
-                // Use inexactRepeating with weekly interval for better battery life
-                alarmManager.setRepeating(
-                    AlarmManager.RTC_WAKEUP,
-                    realTriggerTime,
-                    AlarmManager.INTERVAL_DAY * 7,
-                    pendingIntent
-                )
-                
-                Log.d(TAG, "Debug mode: Scheduled alarm for $time on weekday $weekday at real time ${java.text.SimpleDateFormat("HH:mm:ss").format(java.util.Date(realTriggerTime))}")
+                // Use setExactAndAllowWhileIdle for reliable updates
+                try {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        realTriggerTime,
+                        pendingIntent
+                    )
+                    Log.d(TAG, "Debug mode: Scheduled exact alarm for $time on weekday $weekday at real time ${java.text.SimpleDateFormat("HH:mm:ss").format(java.util.Date(realTriggerTime))}")
+                } catch (e: SecurityException) {
+                    // Fall back to setExact if permission denied
+                    alarmManager.setExact(
+                        AlarmManager.RTC_WAKEUP,
+                        realTriggerTime,
+                        pendingIntent
+                    )
+                    Log.d(TAG, "Debug mode: Scheduled alarm (fallback) for $time on weekday $weekday")
+                }
             } else {
                 // Normal mode: schedule based on actual calendar time
                 val calendar = Calendar.getInstance().apply {
@@ -380,12 +397,23 @@ class WidgetUpdateScheduler {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
                 
-                alarmManager.setRepeating(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    AlarmManager.INTERVAL_DAY * 7,
-                    pendingIntent
-                )
+                // Use setExactAndAllowWhileIdle for reliable updates
+                try {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.timeInMillis,
+                        pendingIntent
+                    )
+                    Log.d(TAG, "Scheduled exact alarm for $time on weekday $weekday")
+                } catch (e: SecurityException) {
+                    // Fall back to setExact if permission denied
+                    alarmManager.setExact(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.timeInMillis,
+                        pendingIntent
+                    )
+                    Log.d(TAG, "Scheduled alarm (fallback) for $time on weekday $weekday")
+                }
             }
         }
         
