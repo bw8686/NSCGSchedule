@@ -111,13 +111,13 @@ class NextExamCardWidget : AppWidgetProvider() {
                 views.setTextViewText(R.id.exam_paper, nextExam.paper)
                 views.setTextViewText(R.id.exam_date, WidgetDataHelper.formatExamDate(nextExam.date))
                 views.setTextViewText(R.id.exam_time, "${nextExam.startTime} - ${nextExam.finishTime}")
-                val roomText = if (nextExam.preRoom.isNotEmpty()) {
-                    "Pre: ${nextExam.preRoom} → ${nextExam.examRoom}"
+                val roomText = if (nextExam.examRoom.isNotEmpty()) {
+                    WidgetDataHelper.formatExamRoom(nextExam.examRoom, nextExam.preRoom, nextExam.seatNumber)
                 } else {
-                    "Room: ${nextExam.examRoom}"
+                    "Room: TBA"
                 }
                 views.setTextViewText(R.id.exam_room, roomText)
-                views.setTextViewText(R.id.exam_seat, if (nextExam.seatNumber.isNotEmpty()) "Seat: ${nextExam.seatNumber}" else "")
+                views.setTextViewText(R.id.exam_seat, "")
                 
                 val daysUntil = WidgetDataHelper.getDaysUntilExam(context, nextExam)
                 val displayText = if (daysUntil > 0) {
@@ -308,15 +308,7 @@ class ExamDetailsWidget : AppWidgetProvider() {
                     views.setTextViewText(ids[1], exam.subjectDescription)
                     views.setTextViewText(ids[2], WidgetDataHelper.formatExamDateShort(exam.date))
                     views.setTextViewText(ids[3], "${exam.startTime} - ${exam.finishTime}")
-                    val roomText = buildString {
-                        if (exam.preRoom.isNotEmpty()) {
-                            append("Pre: ${exam.preRoom} → ")
-                        }
-                        append(exam.examRoom)
-                        if (exam.seatNumber.isNotEmpty()) {
-                            append(" • Seat ${exam.seatNumber}")
-                        }
-                    }
+                    val roomText = WidgetDataHelper.formatExamRoom(exam.examRoom, exam.preRoom, exam.seatNumber)
                     views.setTextViewText(ids[4], roomText)
                     
                     // Set click handler for this exam card

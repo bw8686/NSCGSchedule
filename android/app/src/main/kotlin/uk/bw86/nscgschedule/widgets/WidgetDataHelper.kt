@@ -508,6 +508,45 @@ object WidgetDataHelper {
         }
     }
     
+    /**
+     * Format exam room information including preroom if available
+     * Handles room descriptions like "IC203 (PC ROOM)" and splits them appropriately
+     * 
+     * @param examRoom The main exam room (e.g., "IC203 (PC ROOM)")
+     * @param preRoom The pre-exam room (may be empty)
+     * @param seatNumber Optional seat number to include
+     * @return Formatted string like "Pre: A101 → IC203 (PC ROOM)" or "IC203 (PC ROOM)"
+     */
+    fun formatExamRoom(examRoom: String, preRoom: String, seatNumber: String = ""): String {
+        // Check if preroom is valid (not blank and not too many words which would indicate it's actually the main room)
+        val hasValidPreRoom = preRoom.isNotBlank() && preRoom.split(" ").size < 6
+        
+        val roomText = if (hasValidPreRoom) {
+            "Pre: $preRoom → ${extractRoomCode(examRoom)}"
+        } else {
+            examRoom
+        }
+        
+        return if (seatNumber.isNotEmpty()) {
+            "$roomText • Seat $seatNumber"
+        } else {
+            roomText
+        }
+    }
+    
+    /**
+     * Extract just the room code from a room description
+     * E.g., "IC203 (PC ROOM)" -> "IC203"
+     */
+    fun extractRoomCode(roomDescription: String): String {
+        val firstSpace = roomDescription.indexOf(' ')
+        return if (firstSpace > 0) {
+            roomDescription.substring(0, firstSpace)
+        } else {
+            roomDescription
+        }
+    }
+    
     private fun getCurrentDayName(context: Context): String {
         val cal = getCurrentTime(context)
         return when (cal.get(Calendar.DAY_OF_WEEK)) {

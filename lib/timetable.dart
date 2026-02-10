@@ -910,15 +910,23 @@ class _TimetableScreenState extends State<TimetableScreen> {
               );
             }
 
-            if (beforeEnabled && minutesBefore > 0) {
+            // Exam notifications always go off 45 minutes before
+            if (beforeEnabled) {
               final beforeTime = startDateTime.subtract(
-                Duration(minutes: minutesBefore),
+                const Duration(minutes: 45),
               );
               if (beforeTime.isAfter(now)) {
+                // Determine notification body based on preroom availability
+                final body =
+                    exam.preRoom.isNotEmpty &&
+                        exam.preRoom.split(' ').length < 6
+                    ? 'Go to preroom ${exam.preRoom} in 45 minutes (Seat ${exam.seatNumber})'
+                    : 'Starts in 45 minutes in ${exam.examRoom} (Seat ${exam.seatNumber})';
+
                 await _notificationService.scheduleNotification(
                   notificationId++,
                   exam.subjectDescription,
-                  'Starts in $minutesBefore minutes in ${exam.examRoom} (Seat ${exam.seatNumber})',
+                  body,
                   beforeTime,
                   type: NotificationType.examMinutesBefore,
                   payload: payload,

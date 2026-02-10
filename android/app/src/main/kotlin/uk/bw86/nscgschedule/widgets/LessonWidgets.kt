@@ -61,7 +61,12 @@ class NextLessonCompactWidget : AppWidgetProvider() {
                         val exam = itemToShow.data
                         views.setTextViewText(R.id.lesson_name, "📝 ${exam.subjectDescription}")
                         views.setTextViewText(R.id.lesson_time, "${exam.startTime} - ${exam.finishTime}")
-                        views.setTextViewText(R.id.lesson_room, if (exam.examRoom.isNotEmpty()) "Room: ${exam.examRoom}" else "TBA")
+                        val roomText = if (exam.examRoom.isNotEmpty()) {
+                            WidgetDataHelper.formatExamRoom(exam.examRoom, exam.preRoom)
+                        } else {
+                            "TBA"
+                        }
+                        views.setTextViewText(R.id.lesson_room, roomText)
                         
                         // Show start time or "NOW"
                         val statusText = if (currentItem != null) "NOW" else exam.startTime
@@ -153,8 +158,13 @@ class NextLessonCardWidget : AppWidgetProvider() {
                         views.setTextViewText(R.id.lesson_name, "📝 ${exam.subjectDescription}")
                         views.setTextViewText(R.id.lesson_course, "Exam")
                         views.setTextViewText(R.id.lesson_time, "${exam.startTime} - ${exam.finishTime}")
-                        views.setTextViewText(R.id.lesson_room, if (exam.examRoom.isNotEmpty()) "Room: ${exam.examRoom}" else "Room: TBA")
-                        views.setTextViewText(R.id.lesson_teacher, if (exam.seatNumber.isNotEmpty()) "Seat: ${exam.seatNumber}" else "")
+                        val roomText = if (exam.examRoom.isNotEmpty()) {
+                            WidgetDataHelper.formatExamRoom(exam.examRoom, exam.preRoom, exam.seatNumber)
+                        } else {
+                            "Room: TBA"
+                        }
+                        views.setTextViewText(R.id.lesson_room, roomText)
+                        views.setTextViewText(R.id.lesson_teacher, "")
                         
                         val status = if (currentItem != null) "Now" else "Up Next"
                         views.setTextViewText(R.id.lesson_status, status)
@@ -305,8 +315,27 @@ class TodayScheduleDetailedWidget : AppWidgetProvider() {
                             views.setViewVisibility(ids[0], android.view.View.VISIBLE)
                             views.setTextViewText(ids[1], "📝 ${exam.subjectDescription}")
                             views.setTextViewText(ids[2], exam.startTime)
-                            views.setTextViewText(ids[3], if (exam.examRoom.isNotEmpty()) exam.examRoom else "TBA")
-                            views.setTextViewText(ids[4], if (exam.seatNumber.isNotEmpty()) "Seat ${exam.seatNumber}" else "")
+                            
+                            // Room field: show arrow format if preroom is valid
+                            val roomText = if (exam.examRoom.isNotEmpty()) {
+                                val hasValidPreRoom = exam.preRoom.isNotBlank() && exam.preRoom.split(" ").size < 6
+                                if (hasValidPreRoom) {
+                                    "Pre: ${exam.preRoom} → ${WidgetDataHelper.extractRoomCode(exam.examRoom)}"
+                                } else {
+                                    WidgetDataHelper.extractRoomCode(exam.examRoom)
+                                }
+                            } else {
+                                "TBA"
+                            }
+                            views.setTextViewText(ids[3], roomText)
+                            
+                            // Detail field: always show seat if available
+                            val detailText = if (exam.seatNumber.isNotEmpty()) {
+                                "Seat ${exam.seatNumber}"
+                            } else {
+                                ""
+                            }
+                            views.setTextViewText(ids[4], detailText)
                             
                             // Open main app on exam card click
                             val intent = Intent(context, uk.bw86.nscgschedule.MainActivity::class.java)
